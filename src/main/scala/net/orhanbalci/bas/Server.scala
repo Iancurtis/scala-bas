@@ -16,8 +16,11 @@ class BasServer(host: InetSocketAddress) extends Actor {
 
   var log = Logging(context.system, this)
 
+  IO(Tcp) ! Tcp.Bind(self, host)
   def receive = {
-    case Tcp.Bound(localAddress) => log.debug(s"Spawned $localAddress")
+    case Tcp.Bound(localAddress) => 
+      println(s"Spawned $localAddress")
+      log.debug(s"Spawned $localAddress")
     case Tcp.CommandFailed(_: Tcp.Bind) =>
       println("Bind failed stopping server")
       context stop self
