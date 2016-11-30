@@ -10,15 +10,15 @@ object BasServer {
     Props(new BasServer(host))
   }
 }
-
 class BasServer(host: InetSocketAddress) extends Actor {
   import context.system
 
+  val room = context.actorOf(Room.props)
   var log = Logging(context.system, this)
 
   IO(Tcp) ! Tcp.Bind(self, host)
   def receive = {
-    case Tcp.Bound(localAddress) => 
+    case Tcp.Bound(localAddress) =>
       println(s"Spawned $localAddress")
       log.debug(s"Spawned $localAddress")
     case Tcp.CommandFailed(_: Tcp.Bind) =>
@@ -26,6 +26,7 @@ class BasServer(host: InetSocketAddress) extends Actor {
       context stop self
     case Tcp.Connected(remote, local) =>
       log.debug(s"Connected $remote")
+      room ! Room.Register(remote.toString, sender)
 
   }
 }
