@@ -5,11 +5,6 @@ import akka.io.{Tcp, IO}
 import java.net.InetSocketAddress
 import akka.event.Logging
 
-object BasServer {
-  def props(host: InetSocketAddress): Props = {
-    Props(new BasServer(host))
-  }
-}
 class BasServer(host: InetSocketAddress) extends Actor {
   import context.system
 
@@ -28,5 +23,11 @@ class BasServer(host: InetSocketAddress) extends Actor {
       log.debug(s"Connected $remote")
       room ! Room.Register(remote.toString, sender)
 
+  }
+}
+
+object BasServer {
+  def props(host: InetSocketAddress): Props = {
+    Props(new BasServer(host))
   }
 }
