@@ -9,6 +9,7 @@ message BasRequestResponse{
 		FC_SEND_NAME = 3;
 		FS_ASK_PLAY_COUNT = 4;
 		FC_SEND_PLAY_COUNT = 5;
+		FS_SEND_PLAYER_CONNECTED = 6;
 	}
 
 	RequestResponseType request_type = 1;

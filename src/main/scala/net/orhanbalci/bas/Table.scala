@@ -25,12 +25,18 @@ class Table extends Actor with ActorLogging{
   	playerRequest.requestType  match {
   		case FC_SEND_TEXT_MESSAGE => 
   			sendUserMessage(senderPlayer, playerRequest.textMessage)
+  		case FC_SEND_NAME =>
+  			setPlayerName(senderPlayer, playerRequest.name)
   	}
 
   }
 
   def sendUserMessage(sender : ActorRef, message : String) ={
   		players.foreach( player => if(player._2 != sender) { player._2 ! Player.SendMessage(message) })
+  }
+
+  def setPlayerName(sender : ActorRef, name : String) = {
+  		sender ! Player.SetName(name)
   }
 
 }
