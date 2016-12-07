@@ -1,12 +1,11 @@
 syntax = "proto3";
 
-package net.orhanbalci.bas.proto;
+package net.orhanbalci.bas;
 message BasRequestResponse{
 	enum RequestResponseType{
 		USER_TEXT_MESSAGE = 0;		
 	}
 
-	RequestResponseType type = 1;
-	string message = 2;
-
+	RequestResponseType request_type = 1;
+	string text_message = 2;
 }
