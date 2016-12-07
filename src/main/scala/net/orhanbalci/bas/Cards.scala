@@ -1,15 +1,16 @@
 package net.orhanbalci.bas
 
-sealed abstract class CardType(name : String)
+sealed abstract class CardType(name: String)
 case object Spades extends CardType("Spades")
 case object Hearts extends CardType("Hearts")
 case object Diamonds extends CardType("Diamonds")
 case object Clubs extends CardType("Clubs")
 
-sealed abstract class CardNumber(val name : String, val order : Int) extends Ordered[CardNumber] {
-def compare(that : CardNumber) = this.order - that.order
+sealed abstract class CardNumber(val name: String, val order: Int)
+    extends Ordered[CardNumber] {
+  def compare(that: CardNumber) = this.order - that.order
 }
-case object Ace extends CardNumber("Ace",14)
+case object Ace extends CardNumber("Ace", 14)
 case object King extends CardNumber("King", 13)
 case object Queen extends CardNumber("Queen", 12)
 case object Jack extends CardNumber("Jack", 11)
@@ -21,9 +22,9 @@ case object Six extends CardNumber("Six", 6)
 case object Five extends CardNumber("Five", 5)
 case object Four extends CardNumber("Four", 4)
 case object Three extends CardNumber("Three", 3)
-case object Two extends  CardNumber("Two", 2)
+case object Two extends CardNumber("Two", 2)
 
-sealed abstract class Card(val cardType : CardType, val cardNumber : CardNumber)
+sealed abstract class Card(val cardType: CardType, val cardNumber: CardNumber)
 case object AceOfSpades extends Card(Spades, Ace)
 case object KingOfSpades extends Card(Spades, King)
 case object QueenOfSpades extends Card(Spades, Queen)
@@ -55,7 +56,7 @@ case object TwoOfHearts extends Card(Hearts, Two)
 case object AceOfDiamonds extends Card(Diamonds, Ace)
 case object KingOfDiamonds extends Card(Diamonds, King)
 case object QueenOfDiamonds extends Card(Diamonds, Queen)
-case object JackOfDiamonds extends Card(Diamonds, Jack )
+case object JackOfDiamonds extends Card(Diamonds, Jack)
 case object TenOfDiamonds extends Card(Diamonds, Ten)
 case object NineOfDiamonds extends Card(Diamonds, Nine)
 case object EightOfDiamonds extends Card(Diamonds, Eight)
@@ -81,11 +82,56 @@ case object ThreeOfClubs extends Card(Clubs, Three)
 case object TwoOfClubs extends Card(Clubs, Two)
 
 object Deck {
-  val values = List(AceOfSpades, KingOfSpades, QueenOfSpades, JackOfSpades, TenOfSpades, NineOfSpades, EightOfSpades,
-    SevenOfSpades, SixOfSpades, FiveOfSpades, FourOfSpades, ThreeOfSpades, TwoOfSpades,
-    AceOfHearts, KingOfHearts, QueenOfHearts, JackOfHearts, TenOfHearts, NineOfHearts, EightOfHearts, SevenOfHearts, SixOfHearts,
-    FiveOfHearts, FourOfHearts, ThreeOfHearts, TwoOfHearts,
-    AceOfDiamonds, KingOfDiamonds, QueenOfDiamonds, JackOfDiamonds, TenOfDiamonds, NineOfDiamonds, EightOfDiamonds, SevenOfDiamonds,SixOfDiamonds,
-    FiveOfDiamonds,FourOfDiamonds,ThreeOfDiamonds,TwoOfDiamonds,
-    AceOfClubs,KingOfClubs,QueenOfClubs,JackOfClubs,TenOfClubs,NineOfClubs, EightOfClubs,SevenOfClubs,SixOfClubs, FiveOfClubs,FourOfClubs,ThreeOfClubs,TwoOfClubs)
+  val values = List(AceOfSpades,
+                    KingOfSpades,
+                    QueenOfSpades,
+                    JackOfSpades,
+                    TenOfSpades,
+                    NineOfSpades,
+                    EightOfSpades,
+                    SevenOfSpades,
+                    SixOfSpades,
+                    FiveOfSpades,
+                    FourOfSpades,
+                    ThreeOfSpades,
+                    TwoOfSpades,
+                    AceOfHearts,
+                    KingOfHearts,
+                    QueenOfHearts,
+                    JackOfHearts,
+                    TenOfHearts,
+                    NineOfHearts,
+                    EightOfHearts,
+                    SevenOfHearts,
+                    SixOfHearts,
+                    FiveOfHearts,
+                    FourOfHearts,
+                    ThreeOfHearts,
+                    TwoOfHearts,
+                    AceOfDiamonds,
+                    KingOfDiamonds,
+                    QueenOfDiamonds,
+                    JackOfDiamonds,
+                    TenOfDiamonds,
+                    NineOfDiamonds,
+                    EightOfDiamonds,
+                    SevenOfDiamonds,
+                    SixOfDiamonds,
+                    FiveOfDiamonds,
+                    FourOfDiamonds,
+                    ThreeOfDiamonds,
+                    TwoOfDiamonds,
+                    AceOfClubs,
+                    KingOfClubs,
+                    QueenOfClubs,
+                    JackOfClubs,
+                    TenOfClubs,
+                    NineOfClubs,
+                    EightOfClubs,
+                    SevenOfClubs,
+                    SixOfClubs,
+                    FiveOfClubs,
+                    FourOfClubs,
+                    ThreeOfClubs,
+                    TwoOfClubs)
 }
