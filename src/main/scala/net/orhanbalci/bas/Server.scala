@@ -5,7 +5,7 @@ import akka.io.{Tcp, IO}
 import java.net.InetSocketAddress
 import akka.event.Logging
 
-class BasServer(host: InetSocketAddress) extends Actor with ActorLogging{
+class BasServer(host: InetSocketAddress) extends Actor with ActorLogging {
   import context.system
 
   val room = context.actorOf(Room.props)

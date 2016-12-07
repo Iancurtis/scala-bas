@@ -5,7 +5,7 @@ import akka.actor.{Actor, Props, ActorRef, ActorLogging}
 import akka.io.{Tcp}
 import scala.collection.mutable
 
-class Table extends Actor with ActorLogging{
+class Table extends Actor with ActorLogging {
   var players = mutable.Map[String, ActorRef]()
 
   override def receive = {
@@ -17,26 +17,28 @@ class Table extends Actor with ActorLogging{
     case Table.UnRegister(playerId) =>
       players -= playerId
       context.parent ! Room.UpdatePlayerCount(players.size)
-     case Table.PlayerMessage(playerRequest) =>
-       handlePlayerMessage(playerRequest, sender)
+    case Table.PlayerMessage(playerRequest) =>
+      handlePlayerMessage(playerRequest, sender)
   }
 
-  def handlePlayerMessage(playerRequest : BasRequestResponse, senderPlayer : ActorRef ) = {
-  	playerRequest.requestType  match {
-  		case FC_SEND_TEXT_MESSAGE => 
-  			sendUserMessage(senderPlayer, playerRequest.textMessage)
-  		case FC_SEND_NAME =>
-  			setPlayerName(senderPlayer, playerRequest.name)
-  	}
+  def handlePlayerMessage(playerRequest: BasRequestResponse,
+                          senderPlayer: ActorRef) = {
+    playerRequest.requestType match {
+      case FC_SEND_TEXT_MESSAGE =>
+        sendUserMessage(senderPlayer, playerRequest.textMessage)
+      case FC_SEND_NAME =>
+        setPlayerName(senderPlayer, playerRequest.name)
+    }
 
   }
 
-  def sendUserMessage(sender : ActorRef, message : String) ={
-  		players.foreach( player => if(player._2 != sender) { player._2 ! Player.SendMessage(message) })
+  def sendUserMessage(sender: ActorRef, message: String) = {
+    players.foreach(player =>
+      if (player._2 != sender) { player._2 ! Player.SendMessage(message) })
   }
 
-  def setPlayerName(sender : ActorRef, name : String) = {
-  		sender ! Player.SetName(name)
+  def setPlayerName(sender: ActorRef, name: String) = {
+    sender ! Player.SetName(name)
   }
 
 }
@@ -48,8 +50,5 @@ object Table {
 
   case class Register(remote: String, connection: ActorRef)
   case class UnRegister(playerId: String)
-  case class PlayerMessage(playerRequest : BasRequestResponse)
+  case class PlayerMessage(playerRequest: BasRequestResponse)
 }
-
-
-
