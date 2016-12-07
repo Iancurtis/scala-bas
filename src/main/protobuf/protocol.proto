@@ -3,9 +3,17 @@ syntax = "proto3";
 package net.orhanbalci.bas;
 message BasRequestResponse{
 	enum RequestResponseType{
-		USER_TEXT_MESSAGE = 0;		
+		FC_SEND_TEXT_MESSAGE = 0;		
+		FS_SEND_TEXT_MESSAGE = 1;
+		FS_ASK_NAME = 2;
+		FC_SEND_NAME = 3;
+		FS_ASK_PLAY_COUNT = 4;
+		FC_SEND_PLAY_COUNT = 5;
 	}
 
 	RequestResponseType request_type = 1;
 	string text_message = 2;
+	uint32 error_code = 3;
+	string name = 4;
+	uint32 play_count = 5;
 }

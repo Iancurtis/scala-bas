@@ -1,5 +1,6 @@
 package net.orhanbalci.bas
 import net.orhanbalci.bas.protocol._
+import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType
 import akka.actor.{Actor, ActorRef, Props, ActorLogging}
 import akka.io.{Tcp}
 import akka.util.ByteString
@@ -15,6 +16,8 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging{
     case Tcp.PeerClosed =>
       context.parent ! Table.UnRegister(id)
       context stop self
+    case Player.SendMessage(textMessage) =>
+      connection ! Tcp.Write(Player.encodeOutgoingMessage(RequestResponseType.FS_SEND_TEXT_MESSAGE,textMessage))
 
   }
 }
@@ -28,5 +31,12 @@ object Player {
   	val dataArray = data.toArray
   	BasRequestResponse.parseFrom(dataArray)
   }
+
+  def encodeOutgoingMessage(messageType : RequestResponseType, textMessage : String) : ByteString = {
+    val outgoing  = BasRequestResponse(requestType = messageType, textMessage = textMessage)
+    ByteString.fromArray(outgoing.toByteArray)
+  }
+
+  case class SendMessage(messageText : String)
 
 }
