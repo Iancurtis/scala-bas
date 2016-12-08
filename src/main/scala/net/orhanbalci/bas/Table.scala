@@ -2,7 +2,7 @@ package net.orhanbalci.bas
 import net.orhanbalci.bas.protocol._
 import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
 import akka.actor.{Actor, Props, ActorRef, ActorLogging}
-import akka.io.{Tcp}
+import akka.io.Tcp
 import scala.collection.mutable
 
 class Table extends Actor with ActorLogging {
@@ -32,8 +32,30 @@ class Table extends Actor with ActorLogging {
       case FC_SEND_NAME =>
         setPlayerName(senderPlayer, playerRequest.name)
         seatPlayer(senderPlayer)
+        sendNewPlayerInfo(senderPlayer)
+        sendAllPlayerInfos
     }
 
+  }
+
+  def sendAllPlayerInfos = {
+    if (playerSeats.size == 4) {
+      playerSeats.foreach {
+        case (seat, playerActor) => {
+          val nameMap = mutable.Map[RelativeDirection, String]()
+          playerSeats.foreach {
+            case (innerSeat, innerPlayerActor) =>
+              if (seat != innerSeat) {
+                val relativeDirection = seat.getDirectionRelative(innerSeat)
+                val name = playerNames(innerPlayerActor)
+                nameMap += (relativeDirection -> name)
+              }
+              playerActor ! Player.SendAllPlayerInfos(nameMap)
+          }
+        }
+
+      }
+    }
   }
 
   def sendUserMessage(sender: ActorRef, message: String) = {
@@ -44,25 +66,30 @@ class Table extends Actor with ActorLogging {
   def setPlayerName(player: ActorRef, name: String) = {
     player ! Player.SetName(name)
     playerNames += (player -> name)
-    
+
   }
 
-  def seatPlayer(player : ActorRef) = {
-  	getEmptySeat match {
-    	case Some(seat) => playerSeats += (seat -> player)
-    	case None => {} //TODO Yer yok hata mesaji gonderilmeli
+  def seatPlayer(player: ActorRef) = {
+    getEmptySeat match {
+      case Some(seat) => playerSeats += (seat -> player)
+      case None => //TODO Yer yok hata mesaji gonderilmeli
     }
   }
 
-  def getEmptySeat() : Option[Seat] = {
-  	val difference = Seats.values filterNot playerSeats.keySet
-  	difference.headOption
+  def getEmptySeat: Option[Seat] = {
+    val difference = Seats.values filterNot playerSeats.keySet
+    difference.headOption
   }
 
-  def sendNewPlayerInfo(senderPlayer : ActorRef){
-  	val seat = playerSeats.find(_._2 == senderPlayer)getOrElse(North)
-  	val name = playerNames(senderPlayer)
-  	players.foreach(player => if (player._2 != sender) { player._2 ! Player.SendPlayerInfo(name, LeftDirection) })
+  def sendNewPlayerInfo(senderPlayer: ActorRef) {
+    val newPlayerSeat = playerSeats.find(_._2 == senderPlayer).get._1
+    val name = playerNames(senderPlayer)
+    players.foreach(player =>
+      if (player._2 != sender) {
+        val seat = playerSeats.find(_._2 == player).get._1
+        player._2 ! Player
+          .SendPlayerInfo(name, seat.getDirectionRelative(newPlayerSeat))
+    })
   }
 
 }

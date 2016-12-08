@@ -10,6 +10,7 @@ message BasRequestResponse{
 		FS_ASK_PLAY_COUNT = 4;
 		FC_SEND_PLAY_COUNT = 5;
 		FS_SEND_NEW_USER_INFOS = 6;
+		FS_SEND_ALL_USERS_INFOS = 7;
 	}
 
 	enum UserDirection{
@@ -24,5 +25,8 @@ message BasRequestResponse{
 	string name = 4;
 	uint32 play_count = 5;
 	UserDirection user_direction = 6;
+    string left_user_name = 7;
+    string right_user_name = 8;
+    string cross_user_name = 9;
 
 }
