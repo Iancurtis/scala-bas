@@ -7,6 +7,8 @@ import scala.collection.mutable
 
 class Table extends Actor with ActorLogging {
   var players = mutable.Map[String, ActorRef]()
+  var playerNames = mutable.Map[ActorRef, String]()
+  var playerSeats = mutable.Map[Seat, ActorRef]()
 
   override def receive = {
     case Table.Register(remote, connection) =>
@@ -29,6 +31,7 @@ class Table extends Actor with ActorLogging {
         sendUserMessage(senderPlayer, playerRequest.textMessage)
       case FC_SEND_NAME =>
         setPlayerName(senderPlayer, playerRequest.name)
+
     }
 
   }
@@ -38,8 +41,18 @@ class Table extends Actor with ActorLogging {
       if (player._2 != sender) { player._2 ! Player.SendMessage(message) })
   }
 
-  def setPlayerName(sender: ActorRef, name: String) = {
-    sender ! Player.SetName(name)
+  def setPlayerName(player: ActorRef, name: String) = {
+    player ! Player.SetName(name)
+    playerNames += (player -> name)
+    getEmptySeat match {
+    	case Some(seat) => playerSeats += (seat -> player)
+    	case None => {} //TODO Yer yok hata mesaji gonderilmeli
+    }
+  }
+
+  def getEmptySeat() : Option[Seat] = {
+  	val difference = Seats.values filterNot playerSeats.keySet
+  	difference.headOption
   }
 
 }

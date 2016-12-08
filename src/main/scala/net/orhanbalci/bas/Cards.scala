@@ -82,7 +82,7 @@ case object ThreeOfClubs extends Card(Clubs, Three)
 case object TwoOfClubs extends Card(Clubs, Two)
 
 object Deck {
-  val values = List(AceOfSpades,
+  val values = Set(AceOfSpades,
                     KingOfSpades,
                     QueenOfSpades,
                     JackOfSpades,

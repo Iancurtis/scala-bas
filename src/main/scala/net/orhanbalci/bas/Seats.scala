@@ -30,3 +30,7 @@ case object East extends Seat("East"){
 	def getCross = West
 
 }
+
+object Seats {
+	val values = List(North,South,East,West)
+}
