@@ -1,5 +1,6 @@
 package net.orhanbalci.bas
 import net.orhanbalci.bas.protocol._
+import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
 import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType
 import akka.actor.{Actor, ActorRef, Props, ActorLogging}
 import akka.io.{Tcp}
@@ -9,12 +10,13 @@ class Player(id: String, connection: ActorRef)
     extends Actor
     with ActorLogging {
 
+  import Player._
   var name = ""
 
   def receive = {
     case Tcp.Received(data) =>
       //log.debug(s"$id says ${data.utf8String}")
-      val request = Player.decodeIncommingMessage(data)
+      val request = decodeIncommingMessage(data)
       log.debug(
         s"$id request type ${request.requestType} request message ${request.textMessage}")
       context.parent ! Table.PlayerMessage(request)
@@ -22,11 +24,13 @@ class Player(id: String, connection: ActorRef)
     case Tcp.PeerClosed =>
       context.parent ! Table.UnRegister(id)
       context stop self
-    case Player.SendMessage(textMessage) =>
+    case SendMessage(textMessage) =>
       connection ! Tcp.Write(
-        Player.encodeOutgoingMessage(RequestResponseType.FS_SEND_TEXT_MESSAGE,
+        Player.encodeOutgoingMessage(FS_SEND_TEXT_MESSAGE,
                                      textMessage))
-    case Player.SetName(playerName) =>
+    case AskName =>
+        connection ! Tcp.Write(Player.encodeOutgoingMessage(FS_ASK_NAME,""))
+    case SetName(playerName) =>
       name = playerName
 
   }
@@ -52,5 +56,6 @@ object Player {
 
   case class SendMessage(messageText: String)
   case class SetName(name: String)
+  case object AskName
 
 }

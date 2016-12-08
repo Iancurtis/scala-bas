@@ -14,6 +14,7 @@ class Table extends Actor with ActorLogging {
       players += (remote -> playerActor)
       connection ! Tcp.Register(playerActor)
       context.parent ! Room.UpdatePlayerCount(players.size)
+      playerActor ! Player.AskName
     case Table.UnRegister(playerId) =>
       players -= playerId
       context.parent ! Room.UpdatePlayerCount(players.size)
