@@ -31,7 +31,7 @@ class Table extends Actor with ActorLogging {
         sendUserMessage(senderPlayer, playerRequest.textMessage)
       case FC_SEND_NAME =>
         setPlayerName(senderPlayer, playerRequest.name)
-
+        seatPlayer(senderPlayer)
     }
 
   }
@@ -44,7 +44,11 @@ class Table extends Actor with ActorLogging {
   def setPlayerName(player: ActorRef, name: String) = {
     player ! Player.SetName(name)
     playerNames += (player -> name)
-    getEmptySeat match {
+    
+  }
+
+  def seatPlayer(player : ActorRef) = {
+  	getEmptySeat match {
     	case Some(seat) => playerSeats += (seat -> player)
     	case None => {} //TODO Yer yok hata mesaji gonderilmeli
     }
@@ -53,6 +57,12 @@ class Table extends Actor with ActorLogging {
   def getEmptySeat() : Option[Seat] = {
   	val difference = Seats.values filterNot playerSeats.keySet
   	difference.headOption
+  }
+
+  def sendNewPlayerInfo(senderPlayer : ActorRef){
+  	val seat = playerSeats.find(_._2 == senderPlayer)getOrElse(North)
+  	val name = playerNames(senderPlayer)
+  	players.foreach(player => if (player._2 != sender) { player._2 ! Player.SendPlayerInfo(name, LeftDirection) })
   }
 
 }

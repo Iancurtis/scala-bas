@@ -9,7 +9,13 @@ message BasRequestResponse{
 		FC_SEND_NAME = 3;
 		FS_ASK_PLAY_COUNT = 4;
 		FC_SEND_PLAY_COUNT = 5;
-		FS_SEND_PLAYER_CONNECTED = 6;
+		FS_SEND_NEW_USER_INFOS = 6;
+	}
+
+	enum UserDirection{
+		UD_CROSS = 0;
+		UD_LEFT = 1;
+		UD_RIGHT = 2;
 	}
 
 	RequestResponseType request_type = 1;
@@ -17,4 +23,6 @@ message BasRequestResponse{
 	uint32 error_code = 3;
 	string name = 4;
 	uint32 play_count = 5;
+	UserDirection user_direction = 6;
+
 }
