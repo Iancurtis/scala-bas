@@ -42,6 +42,14 @@ class Player(id: String, connection: ActorRef)
         encodeOutgoingMessage(messageType = FS_SEND_NEW_USER_INFOS,
                               userDirection = relativeDirection))
     case SendAllPlayerInfos(directionNameMap) =>
+      sendAllPlayerInfos(directionNameMap)
+  }
+
+  def sendAllPlayerInfos( directionNameMap: mutable.Map[RelativeDirection, String]) = {
+    connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_SEND_ALL_USERS_INFOS,
+                                                leftUserName = directionNameMap(LeftDirection),
+                                                rightUserName = directionNameMap(RightDirection),
+                                                crossUserName = directionNameMap(CrossDirection)))
   }
 }
 
@@ -58,7 +66,10 @@ object Player {
   def encodeOutgoingMessage(
       messageType: RequestResponseType = Unrecognized(-1),
       textMessage: String = "",
-      userDirection: RelativeDirection = SelfDirection): ByteString = {
+      userDirection: RelativeDirection = SelfDirection,
+      leftUserName: String = "",
+      rightUserName : String = "",
+      crossUserName : String = ""): ByteString = {
     val outgoing = BasRequestResponse(
       requestType = messageType,
       textMessage = textMessage,
@@ -71,7 +82,6 @@ object Player {
   case class SetName(name: String)
   case object AskName
   case class SendPlayerInfo(name: String, relativeDirection: RelativeDirection)
-  case class SendAllPlayerInfos(
-      nameMap: mutable.Map[RelativeDirection, String])
+  case class SendAllPlayerInfos(nameMap: mutable.Map[RelativeDirection, String])
 
 }

@@ -9,6 +9,9 @@ class Table extends Actor with ActorLogging {
   var players = mutable.Map[String, ActorRef]()
   var playerNames = mutable.Map[ActorRef, String]()
   var playerSeats = mutable.Map[Seat, ActorRef]()
+  var whoesTurn = South
+  var moveCount = 13
+  var gameCount = 11
 
   override def receive = {
     case Table.Register(remote, connection) =>
