@@ -6,12 +6,12 @@ import akka.io.Tcp
 import scala.collection.mutable
 
 class Table extends Actor with ActorLogging {
-  var players = mutable.Map[String, ActorRef]()
+  var players     = mutable.Map[String, ActorRef]()
   var playerNames = mutable.Map[ActorRef, String]()
   var playerSeats = mutable.Map[Seat, ActorRef]()
-  var whoesTurn = South
-  var moveCount = 13
-  var gameCount = 11
+  var whoesTurn   = South
+  var moveCount   = 13
+  var gameCount   = 11
 
   override def receive = {
     case Table.Register(remote, connection) =>
@@ -30,8 +30,7 @@ class Table extends Actor with ActorLogging {
       handlePlayerMessage(playerRequest, sender)
   }
 
-  def handlePlayerMessage(playerRequest: BasRequestResponse,
-                          senderPlayer: ActorRef) = {
+  def handlePlayerMessage(playerRequest: BasRequestResponse, senderPlayer: ActorRef) = {
     playerRequest.requestType match {
       case FC_SEND_TEXT_MESSAGE =>
         sendUserMessage(senderPlayer, playerRequest.textMessage)
@@ -53,7 +52,7 @@ class Table extends Actor with ActorLogging {
             case (innerSeat, innerPlayerActor) =>
               if (seat != innerSeat) {
                 val relativeDirection = seat.getDirectionRelative(innerSeat)
-                val name = playerNames(innerPlayerActor)
+                val name              = playerNames(innerPlayerActor)
                 nameMap += (relativeDirection -> name)
               }
               playerActor ! Player.SendAllPlayerInfos(nameMap)
@@ -65,8 +64,7 @@ class Table extends Actor with ActorLogging {
   }
 
   def sendUserMessage(sender: ActorRef, message: String) = {
-    players.foreach(player =>
-      if (player._2 != sender) { player._2 ! Player.SendMessage(message) })
+    players.foreach(player => if (player._2 != sender) { player._2 ! Player.SendMessage(message) })
   }
 
   def setPlayerName(player: ActorRef, name: String) = {
@@ -77,7 +75,9 @@ class Table extends Actor with ActorLogging {
 
   def seatPlayer(player: ActorRef) = {
     getEmptySeat match {
-      case Some(seat) => {playerSeats += (seat -> player); log.info(s"Player seatded $seat $player")}
+      case Some(seat) => {
+        playerSeats += (seat -> player); log.info(s"Player seatded $seat $player")
+      }
       case None => log.info("Oturacak yer yok")
     }
   }
@@ -89,12 +89,11 @@ class Table extends Actor with ActorLogging {
 
   def sendNewPlayerInfo(senderPlayer: ActorRef) {
     val newPlayerSeat = playerSeats.find(_._2 == senderPlayer).get._1
-    val name = playerNames(senderPlayer)
+    val name          = playerNames(senderPlayer)
     players.foreach(player =>
       if (player._2 != senderPlayer) {
         val seat = playerSeats.find(_._2 == player._2).get._1
-        player._2 ! Player
-          .SendPlayerInfo(name, seat.getDirectionRelative(newPlayerSeat))
+        player._2 ! Player.SendPlayerInfo(name, seat.getDirectionRelative(newPlayerSeat))
     })
   }
 
