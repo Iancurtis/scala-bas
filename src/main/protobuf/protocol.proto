@@ -17,6 +17,7 @@ message BasRequestResponse{
 		UD_CROSS = 0;
 		UD_LEFT = 1;
 		UD_RIGHT = 2;
+		UD_SELF = 3;
 	}
 
 	RequestResponseType request_type = 1;

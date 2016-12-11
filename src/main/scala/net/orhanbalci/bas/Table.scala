@@ -20,9 +20,12 @@ class Table extends Actor with ActorLogging {
       connection ! Tcp.Register(playerActor)
       context.parent ! Room.UpdatePlayerCount(players.size)
       playerActor ! Player.AskName
+      log.info(s"Player registered $remote -> $playerActor")
     case Table.UnRegister(playerId) =>
+      playerNames -= players(playerId)
       players -= playerId
       context.parent ! Room.UpdatePlayerCount(players.size)
+      log.info(s"Unregistered $playerId")
     case Table.PlayerMessage(playerRequest) =>
       handlePlayerMessage(playerRequest, sender)
   }
@@ -74,8 +77,8 @@ class Table extends Actor with ActorLogging {
 
   def seatPlayer(player: ActorRef) = {
     getEmptySeat match {
-      case Some(seat) => playerSeats += (seat -> player)
-      case None => //TODO Yer yok hata mesaji gonderilmeli
+      case Some(seat) => {playerSeats += (seat -> player); log.info(s"Player seatded $seat $player")}
+      case None => log.info("Oturacak yer yok")
     }
   }
 
@@ -88,8 +91,8 @@ class Table extends Actor with ActorLogging {
     val newPlayerSeat = playerSeats.find(_._2 == senderPlayer).get._1
     val name = playerNames(senderPlayer)
     players.foreach(player =>
-      if (player._2 != sender) {
-        val seat = playerSeats.find(_._2 == player).get._1
+      if (player._2 != senderPlayer) {
+        val seat = playerSeats.find(_._2 == player._2).get._1
         player._2 ! Player
           .SendPlayerInfo(name, seat.getDirectionRelative(newPlayerSeat))
     })
