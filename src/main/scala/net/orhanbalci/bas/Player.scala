@@ -53,6 +53,7 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
   }
 
   def sendAllPlayerInfos(directionNameMap: mutable.Map[RelativeDirection, String]) = {
+    log.debug(s"send all player infos for $name")
     connection ! Tcp.Write(
       encodeOutgoingMessage(messageType = FS_SEND_ALL_USERS_INFOS,
                             leftUserName = directionNameMap.getOrElse(LeftDirection, ""),

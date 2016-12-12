@@ -58,15 +58,15 @@ class Table extends Actor with ActorLogging {
               val relativeDirection = seat.getDirectionRelative(innerSeat)
               val name              = playerNames(innerPlayerActor)
               nameMap += (relativeDirection -> name)
-              log.debug(s"$relativeDirection -> $name")
             }
-            playerActor ! Player.SendAllPlayerInfos(nameMap)
         }
+        playerActor ! Player.SendAllPlayerInfos(nameMap)
       }
     }
   }
 
   def sendPlayerCards = {
+    log.debug("sending player cards")
     playerCards.foreach {
       case (player, cards) => player ! Player.SendPlayerCards(cards)
     }
@@ -84,7 +84,7 @@ class Table extends Actor with ActorLogging {
   def seatPlayer(player: ActorRef) = {
     getEmptySeat match {
       case Some(seat) => {
-        playerSeats += (seat -> player); log.info(s"Player seatded $seat $player")
+        playerSeats += (seat -> player); log.info(s"Player seated $seat $player")
       }
       case None => log.info("Oturacak yer yok")
     }
@@ -115,8 +115,10 @@ class Table extends Actor with ActorLogging {
       playerCards += (playerSeats(East)  -> cardGroups(2))
       playerCards += (playerSeats(West)  -> cardGroups(3))
       true
+    } else {
+      log.debug(s"player seats size ${playerSeats.size}")
+      false
     }
-    false
   }
 }
 
