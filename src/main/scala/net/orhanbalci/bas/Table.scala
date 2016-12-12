@@ -7,13 +7,15 @@ import scala.collection.mutable
 import scala.util.Random
 
 class Table extends Actor with ActorLogging {
-  var players     = mutable.Map[String, ActorRef]()
-  var playerNames = mutable.Map[ActorRef, String]()
-  var playerSeats = mutable.Map[Seat, ActorRef]()
-  var playerCards = mutable.Map[ActorRef, List[Card]]()
-  var whoesTurn   = South
-  var moveCount   = 13
-  var gameCount   = 11
+  var players          = mutable.Map[String, ActorRef]()
+  var playerNames      = mutable.Map[ActorRef, String]()
+  var playerSeats      = mutable.Map[Seat, ActorRef]()
+  var playerCards      = mutable.Map[ActorRef, List[Card]]()
+  var playCounts       = Map[ActorRef, Integer]()
+  var whosTurn: Seat   = South
+  var moveCount        = 13
+  var gameCount        = 11
+  var inPlayTurn: Seat = South
 
   override def receive = {
     case Table.Register(remote, connection) =>
@@ -43,9 +45,29 @@ class Table extends Actor with ActorLogging {
         seatPlayer(senderPlayer)
         //sendNewPlayerInfo(senderPlayer)
         sendAllPlayerInfos
-        if (dealCards)
+        if (dealCards) {
           sendPlayerCards
+          askPlayCount(South)
+        }
+      case FC_SEND_PLAY_COUNT =>
+        setPlayCount(senderPlayer, playerRequest.playCount)
+        if (playCounts.size < 4)
+          askPlayCount(getNextInPlayTurn)
+        else
+          askTrump
     }
+  }
+
+  def askTrump = {
+    playCounts.maxBy(_._2)._1 ! Player.AskTrump
+  }
+
+  def setPlayCount(player: ActorRef, playCount: Integer) = {
+    playCounts = playCounts + (player -> playCount)
+  }
+
+  def askPlayCount(seat: Seat) = {
+    playerSeats(seat) ! Player.AskPlayCount
   }
 
   def sendAllPlayerInfos = {
@@ -63,6 +85,11 @@ class Table extends Actor with ActorLogging {
         playerActor ! Player.SendAllPlayerInfos(nameMap)
       }
     }
+  }
+
+  def getNextInPlayTurn: Seat = {
+    inPlayTurn = inPlayTurn.getRight
+    inPlayTurn
   }
 
   def sendPlayerCards = {

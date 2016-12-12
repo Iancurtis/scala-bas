@@ -12,6 +12,8 @@ message BasRequestResponse{
 		FS_SEND_NEW_USER_INFOS = 6;
 		FS_SEND_ALL_USERS_INFOS = 7;
 		FS_SEND_PLAYER_CARDS = 8;
+		FS_ASK_TRUMP = 9;
+		FC_SEND_TRUMP = 10;
 	}
 
 	enum UserDirection{

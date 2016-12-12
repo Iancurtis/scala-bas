@@ -38,6 +38,18 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
       sendAllPlayerInfos(directionNameMap)
     case SendPlayerCards(cards) =>
       sendPlayerCards(cards)
+    case AskPlayCount =>
+      sendAskPlayCount
+    case AskTrump =>
+      askTrump
+  }
+
+  def askTrump = {
+    connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_ASK_TRUMP))
+  }
+
+  def sendAskPlayCount = {
+    connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_ASK_PLAY_COUNT))
   }
 
   def sendPlayerCards(cards: List[Card]) = {
@@ -97,5 +109,7 @@ object Player {
   case class SendPlayerInfo(name: String, relativeDirection: RelativeDirection)
   case class SendAllPlayerInfos(nameMap: mutable.Map[RelativeDirection, String])
   case class SendPlayerCards(cards: List[Card])
+  case object AskPlayCount
+  case object AskTrump
 
 }
