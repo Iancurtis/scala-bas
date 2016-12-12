@@ -4,11 +4,13 @@ import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
 import akka.actor.{Actor, Props, ActorRef, ActorLogging}
 import akka.io.Tcp
 import scala.collection.mutable
+import scala.util.Random
 
 class Table extends Actor with ActorLogging {
   var players     = mutable.Map[String, ActorRef]()
   var playerNames = mutable.Map[ActorRef, String]()
   var playerSeats = mutable.Map[Seat, ActorRef]()
+  var playerCards = mutable.Map[ActorRef, List[Card]]()
   var whoesTurn   = South
   var moveCount   = 13
   var gameCount   = 11
@@ -23,6 +25,8 @@ class Table extends Actor with ActorLogging {
       log.info(s"Player registered $remote -> $playerActor")
     case Table.UnRegister(playerId) =>
       playerNames -= players(playerId)
+      playerSeats = playerSeats.filterNot(seatRef => seatRef._2 == players(playerId))
+      playerCards -= players(playerId)
       players -= playerId
       context.parent ! Room.UpdatePlayerCount(players.size)
       log.info(s"Unregistered $playerId")
@@ -37,29 +41,34 @@ class Table extends Actor with ActorLogging {
       case FC_SEND_NAME =>
         setPlayerName(senderPlayer, playerRequest.name)
         seatPlayer(senderPlayer)
-        sendNewPlayerInfo(senderPlayer)
+        //sendNewPlayerInfo(senderPlayer)
         sendAllPlayerInfos
+        if (dealCards)
+          sendPlayerCards
     }
-
   }
 
   def sendAllPlayerInfos = {
-    if (playerSeats.size == 4) {
-      playerSeats.foreach {
-        case (seat, playerActor) => {
-          val nameMap = mutable.Map[RelativeDirection, String]()
-          playerSeats.foreach {
-            case (innerSeat, innerPlayerActor) =>
-              if (seat != innerSeat) {
-                val relativeDirection = seat.getDirectionRelative(innerSeat)
-                val name              = playerNames(innerPlayerActor)
-                nameMap += (relativeDirection -> name)
-              }
-              playerActor ! Player.SendAllPlayerInfos(nameMap)
-          }
+    playerSeats.foreach {
+      case (seat, playerActor) => {
+        val nameMap = mutable.Map[RelativeDirection, String]()
+        playerSeats.foreach {
+          case (innerSeat, innerPlayerActor) =>
+            if (seat != innerSeat) {
+              val relativeDirection = seat.getDirectionRelative(innerSeat)
+              val name              = playerNames(innerPlayerActor)
+              nameMap += (relativeDirection -> name)
+              log.debug(s"$relativeDirection -> $name")
+            }
+            playerActor ! Player.SendAllPlayerInfos(nameMap)
         }
-
       }
+    }
+  }
+
+  def sendPlayerCards = {
+    playerCards.foreach {
+      case (player, cards) => player ! Player.SendPlayerCards(cards)
     }
   }
 
@@ -70,7 +79,6 @@ class Table extends Actor with ActorLogging {
   def setPlayerName(player: ActorRef, name: String) = {
     player ! Player.SetName(name)
     playerNames += (player -> name)
-
   }
 
   def seatPlayer(player: ActorRef) = {
@@ -97,6 +105,19 @@ class Table extends Actor with ActorLogging {
     })
   }
 
+  def dealCards: Boolean = {
+    if (playerSeats.size == 4) {
+      var deck = Deck.values.toList
+      deck = Random.shuffle(deck)
+      val cardGroups = deck.sliding(13).toList
+      playerCards += (playerSeats(North) -> cardGroups(0))
+      playerCards += (playerSeats(South) -> cardGroups(1))
+      playerCards += (playerSeats(East)  -> cardGroups(2))
+      playerCards += (playerSeats(West)  -> cardGroups(3))
+      true
+    }
+    false
+  }
 }
 
 object Table {

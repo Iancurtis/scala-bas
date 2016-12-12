@@ -36,14 +36,28 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
                               userDirection = relativeDirection))
     case SendAllPlayerInfos(directionNameMap) =>
       sendAllPlayerInfos(directionNameMap)
+    case SendPlayerCards(cards) =>
+      sendPlayerCards(cards)
+  }
+
+  def sendPlayerCards(cards: List[Card]) = {
+    val cardsTransformed = cards.map(
+      c =>
+        BasRequestResponse
+          .PlayingCard()
+          .withCardType(c.cardType.name)
+          .withCardNumber(c.cardNumber.name))
+    connection ! Tcp.Write(
+      encodeOutgoingMessage(messageType = FS_SEND_PLAYER_CARDS, userCards = cardsTransformed))
+
   }
 
   def sendAllPlayerInfos(directionNameMap: mutable.Map[RelativeDirection, String]) = {
     connection ! Tcp.Write(
       encodeOutgoingMessage(messageType = FS_SEND_ALL_USERS_INFOS,
-                            leftUserName = directionNameMap(LeftDirection),
-                            rightUserName = directionNameMap(RightDirection),
-                            crossUserName = directionNameMap(CrossDirection)))
+                            leftUserName = directionNameMap.getOrElse(LeftDirection, ""),
+                            rightUserName = directionNameMap.getOrElse(RightDirection, ""),
+                            crossUserName = directionNameMap.getOrElse(CrossDirection, "")))
   }
 }
 
@@ -57,16 +71,22 @@ object Player {
     BasRequestResponse.parseFrom(dataArray)
   }
 
-  def encodeOutgoingMessage(messageType: RequestResponseType = Unrecognized(-1),
-                            textMessage: String = "",
-                            userDirection: RelativeDirection = SelfDirection,
-                            leftUserName: String = "",
-                            rightUserName: String = "",
-                            crossUserName: String = ""): ByteString = {
-    val outgoing = BasRequestResponse(requestType = messageType,
-                                      textMessage = textMessage,
-                                      errorCode = 1,
-                                      userDirection = UserDirection.fromValue(userDirection.code))
+  def encodeOutgoingMessage(
+      messageType: RequestResponseType = Unrecognized(-1),
+      textMessage: String = "",
+      userDirection: RelativeDirection = SelfDirection,
+      leftUserName: String = "",
+      rightUserName: String = "",
+      crossUserName: String = "",
+      userCards: Seq[BasRequestResponse.PlayingCard] = List()): ByteString = {
+    val outgoing = BasRequestResponse()
+      .withRequestType(messageType)
+      .withTextMessage(textMessage)
+      .withUserDirection(UserDirection.fromValue(userDirection.code))
+      .withLeftUserName(leftUserName)
+      .withRightUserName(rightUserName)
+      .withCrossUserName(crossUserName)
+      .withUserCards(userCards)
     ByteString.fromArray(outgoing.toByteArray)
   }
 
@@ -75,5 +95,6 @@ object Player {
   case object AskName
   case class SendPlayerInfo(name: String, relativeDirection: RelativeDirection)
   case class SendAllPlayerInfos(nameMap: mutable.Map[RelativeDirection, String])
+  case class SendPlayerCards(cards: List[Card])
 
 }

@@ -3,7 +3,7 @@ import akka.actor.{Actor, Props, ActorRef, ActorLogging}
 import scala.collection.mutable
 
 class Room extends Actor with ActorLogging {
-  val tables = mutable.Map[String, ActorRef]()
+  val tables            = mutable.Map[String, ActorRef]()
   val tablePlayerCounts = mutable.Map[ActorRef, Int]()
 
   override def receive = {
