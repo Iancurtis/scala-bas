@@ -7,15 +7,16 @@ import scala.collection.mutable
 import scala.util.Random
 
 class Table extends Actor with ActorLogging {
-  var players          = mutable.Map[String, ActorRef]()
-  var playerNames      = mutable.Map[ActorRef, String]()
-  var playerSeats      = mutable.Map[Seat, ActorRef]()
-  var playerCards      = mutable.Map[ActorRef, List[Card]]()
-  var playCounts       = Map[ActorRef, Integer]()
-  var whosTurn: Seat   = South
-  var moveCount        = 13
-  var gameCount        = 11
-  var inPlayTurn: Seat = South
+  var players                     = mutable.Map[String, ActorRef]()
+  var playerNames                 = mutable.Map[ActorRef, String]()
+  var playerSeats                 = mutable.Map[Seat, ActorRef]()
+  var playerCards                 = mutable.Map[ActorRef, List[Card]]()
+  var playCounts                  = Map[ActorRef, Integer]()
+  var whosTurn: Seat              = South
+  var moveCount                   = 13
+  var gameCount                   = 11
+  var inPlayTurn: Seat            = South
+  var trump: (ActorRef, CardType) = (self, Diamonds)
 
   override def receive = {
     case Table.Register(remote, connection) =>
@@ -30,7 +31,7 @@ class Table extends Actor with ActorLogging {
       playerSeats = playerSeats.filterNot(seatRef => seatRef._2 == players(playerId))
       playerCards -= players(playerId)
       playCounts = playCounts - players(playerId)
-      players -= playerId      
+      players -= playerId
       context.parent ! Room.UpdatePlayerCount(players.size)
       log.info(s"Unregistered $playerId")
     case Table.PlayerMessage(playerRequest) =>
@@ -43,7 +44,7 @@ class Table extends Actor with ActorLogging {
         sendUserMessage(senderPlayer, playerRequest.textMessage)
       case FC_SEND_NAME =>
         setPlayerName(senderPlayer, playerRequest.name)
-        seatPlayer(senderPlayer)        
+        seatPlayer(senderPlayer)
         sendAllPlayerInfos
         if (dealCards) {
           sendPlayerCards
@@ -55,6 +56,24 @@ class Table extends Actor with ActorLogging {
           askPlayCount(getNextInPlayTurn)
         else
           askTrump
+      case FC_SEND_TRUMP =>
+        setTrump(
+          senderPlayer,
+          playerRequest.cardInPlay.getOrElse(BasRequestResponse.PlayingCard("", "")).cardType)
+    }
+  }
+
+  def setTrump(senderPlayer: ActorRef, cardType: String) = {
+    trump = cardType match {
+      case "Spades"   => (senderPlayer, Spades)
+      case "Clubs"    => (senderPlayer, Clubs)
+      case "Diamonds" => (senderPlayer, Diamonds)
+      case "Hearts"   => (senderPlayer, Hearts)
+    }
+
+    inPlayTurn = playerSeats.find(_._2 == senderPlayer) match {
+      case Some(playerSeat) => playerSeat._1
+      case None             => South
     }
   }
 

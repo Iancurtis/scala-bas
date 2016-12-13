@@ -42,5 +42,6 @@ message BasRequestResponse{
     uint32 left_play_count = 12;
     uint32 right_play_count = 13;
     uint32 cross_play_count = 14;
+    PlayingCard card_in_play = 15;
 
 }
