@@ -38,8 +38,8 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
       sendAllPlayerInfos(directionNameMap)
     case SendPlayerCards(cards) =>
       sendPlayerCards(cards)
-    case AskPlayCount =>
-      sendAskPlayCount
+    case AskPlayCount(playCounts) =>
+      sendAskPlayCount(playCounts)
     case AskTrump =>
       askTrump
   }
@@ -48,8 +48,12 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
     connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_ASK_TRUMP))
   }
 
-  def sendAskPlayCount = {
-    connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_ASK_PLAY_COUNT))
+  def sendAskPlayCount(playCounts: Map[RelativeDirection, Integer]) = {
+    connection ! Tcp.Write(
+      encodeOutgoingMessage(messageType = FS_ASK_PLAY_COUNT,
+                            leftPlayCount = playCounts.getOrElse(LeftDirection, 0),
+                            rightPlayCount = playCounts.getOrElse(RightDirection, 0),
+                            crossPlayCount = playCounts.getOrElse(CrossDirection, 0)))
   }
 
   def sendPlayerCards(cards: List[Card]) = {
@@ -84,14 +88,16 @@ object Player {
     BasRequestResponse.parseFrom(dataArray)
   }
 
-  def encodeOutgoingMessage(
-      messageType: RequestResponseType = Unrecognized(-1),
-      textMessage: String = "",
-      userDirection: RelativeDirection = SelfDirection,
-      leftUserName: String = "",
-      rightUserName: String = "",
-      crossUserName: String = "",
-      userCards: Seq[BasRequestResponse.PlayingCard] = List()): ByteString = {
+  def encodeOutgoingMessage(messageType: RequestResponseType = Unrecognized(-1),
+                            textMessage: String = "",
+                            userDirection: RelativeDirection = SelfDirection,
+                            leftUserName: String = "",
+                            rightUserName: String = "",
+                            crossUserName: String = "",
+                            userCards: Seq[BasRequestResponse.PlayingCard] = List(),
+                            leftPlayCount: Integer = 0,
+                            rightPlayCount: Integer = 0,
+                            crossPlayCount: Integer = 0): ByteString = {
     val outgoing = BasRequestResponse()
       .withRequestType(messageType)
       .withTextMessage(textMessage)
@@ -100,6 +106,9 @@ object Player {
       .withRightUserName(rightUserName)
       .withCrossUserName(crossUserName)
       .withUserCards(userCards)
+      .withLeftPlayCount(leftPlayCount)
+      .withRightPlayCount(rightPlayCount)
+      .withCrossPlayCount(crossPlayCount)
     ByteString.fromArray(outgoing.toByteArray)
   }
 
@@ -109,7 +118,7 @@ object Player {
   case class SendPlayerInfo(name: String, relativeDirection: RelativeDirection)
   case class SendAllPlayerInfos(nameMap: mutable.Map[RelativeDirection, String])
   case class SendPlayerCards(cards: List[Card])
-  case object AskPlayCount
+  case class AskPlayCount(playCounts: Map[RelativeDirection, Integer])
   case object AskTrump
 
 }

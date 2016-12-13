@@ -39,5 +39,8 @@ message BasRequestResponse{
     string cross_user_name = 9;
     repeated PlayingCard user_cards = 10;
     repeated PlayingCard cards_on_table = 11;
+    uint32 left_play_count = 12;
+    uint32 right_play_count = 13;
+    uint32 cross_play_count = 14;
 
 }

@@ -29,7 +29,8 @@ class Table extends Actor with ActorLogging {
       playerNames -= players(playerId)
       playerSeats = playerSeats.filterNot(seatRef => seatRef._2 == players(playerId))
       playerCards -= players(playerId)
-      players -= playerId
+      playCounts = playCounts - players(playerId)
+      players -= playerId      
       context.parent ! Room.UpdatePlayerCount(players.size)
       log.info(s"Unregistered $playerId")
     case Table.PlayerMessage(playerRequest) =>
@@ -42,8 +43,7 @@ class Table extends Actor with ActorLogging {
         sendUserMessage(senderPlayer, playerRequest.textMessage)
       case FC_SEND_NAME =>
         setPlayerName(senderPlayer, playerRequest.name)
-        seatPlayer(senderPlayer)
-        //sendNewPlayerInfo(senderPlayer)
+        seatPlayer(senderPlayer)        
         sendAllPlayerInfos
         if (dealCards) {
           sendPlayerCards
@@ -67,7 +67,15 @@ class Table extends Actor with ActorLogging {
   }
 
   def askPlayCount(seat: Seat) = {
-    playerSeats(seat) ! Player.AskPlayCount
+    val playCountMap: Map[RelativeDirection, Integer] = playCounts.flatMap {
+      case (playerActor, playCount) =>
+        playerSeats.find(playerSeat => playerSeat._2 == playerActor) match {
+          case Some(innerSeat) => Some(seat.getDirectionRelative(innerSeat._1) -> playCount)
+          case None            => log.debug("askPlayCount can not find seat for player "); None
+        }
+    }
+    log.debug(s"playcounts size ${playCounts.size}")
+    playerSeats(seat) ! Player.AskPlayCount(playCountMap)
   }
 
   def sendAllPlayerInfos = {
