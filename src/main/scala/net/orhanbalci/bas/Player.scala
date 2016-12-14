@@ -42,7 +42,11 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
       sendAskPlayCount(playCounts)
     case AskTrump =>
       askTrump
+    case SendWhosTurn(relativeDirection) =>
+      sendWhosTurn(relativeDirection)
   }
+
+  def sendWhosTurn(relativeDirection: RelativeDirection) = {}
 
   def askTrump = {
     connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_ASK_TRUMP))
@@ -61,8 +65,8 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
       c =>
         BasRequestResponse
           .PlayingCard()
-          .withCardType(c.cardType.name)
-          .withCardNumber(c.cardNumber.name))
+          .withCardType(convertCardType(c))
+          .withCardNumber(convertCardNumber(c)))
     connection ! Tcp.Write(
       encodeOutgoingMessage(messageType = FS_SEND_PLAYER_CARDS, userCards = cardsTransformed))
 
@@ -112,6 +116,33 @@ object Player {
     ByteString.fromArray(outgoing.toByteArray)
   }
 
+  def convertCardType(card : Card ) : BasRequestResponse.CardType = {
+    card.cardType match {
+      case Spades => BasRequestResponse.CardType.CT_SPADES
+      case Clubs => BasRequestResponse.CardType.CT_CLUBS
+      case Diamonds => BasRequestResponse.CardType.CT_DIAMONDS
+      case Hearts => BasRequestResponse.CardType.CT_HEARTS
+    }
+  }
+
+  def convertCardNumber(card : Card) : BasRequestResponse.CardNumber = {
+    card.cardNumber match {
+      case Ace =>  BasRequestResponse.CardNumber.CN_ACE
+      case King => BasRequestResponse.CardNumber.CN_KING
+      case Queen => BasRequestResponse.CardNumber.CN_QUEEN
+      case Jack => BasRequestResponse.CardNumber.CN_JACK
+      case Ten => BasRequestResponse.CardNumber.CN_TEN
+      case Nine => BasRequestResponse.CardNumber.CN_NINE
+      case Eight => BasRequestResponse.CardNumber.CN_EIGHT
+      case Seven => BasRequestResponse.CardNumber.CN_SEVEN
+      case Six => BasRequestResponse.CardNumber.CN_SIX
+      case Five => BasRequestResponse.CardNumber.CN_FIVE
+      case Four => BasRequestResponse.CardNumber.CN_FOUR
+      case Three => BasRequestResponse.CardNumber.CN_THREE
+      case Two => BasRequestResponse.CardNumber.CN_TWO
+    }
+  }
+
   case class SendMessage(messageText: String)
   case class SetName(name: String)
   case object AskName
@@ -120,5 +151,6 @@ object Player {
   case class SendPlayerCards(cards: List[Card])
   case class AskPlayCount(playCounts: Map[RelativeDirection, Integer])
   case object AskTrump
+  case class SendWhosTurn(relativeDirection: RelativeDirection)
 
 }

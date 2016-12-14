@@ -1,6 +1,8 @@
 package net.orhanbalci.bas
 import net.orhanbalci.bas.protocol._
 import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
+import net.orhanbalci.bas.protocol.BasRequestResponse.CardType._
+import net.orhanbalci.bas.protocol.BasRequestResponse.CardNumber._
 import akka.actor.{Actor, Props, ActorRef, ActorLogging}
 import akka.io.Tcp
 import scala.collection.mutable
@@ -59,16 +61,24 @@ class Table extends Actor with ActorLogging {
       case FC_SEND_TRUMP =>
         setTrump(
           senderPlayer,
-          playerRequest.cardInPlay.getOrElse(BasRequestResponse.PlayingCard("", "")).cardType)
+          playerRequest.cardInPlay.getOrElse(BasRequestResponse.PlayingCard(CT_SPADES, CN_ACE)).cardType)
+        sendWhosTurn(inPlayTurn)
     }
   }
 
-  def setTrump(senderPlayer: ActorRef, cardType: String) = {
+  def sendWhosTurn(playerInTurnSeat: Seat) = {
+    playerSeats foreach {
+      case (seat, player) =>
+        player ! Player.SendWhosTurn(seat.getDirectionRelative(playerInTurnSeat))
+    }
+  }
+
+  def setTrump(senderPlayer: ActorRef, cardType: BasRequestResponse.CardType) = {
     trump = cardType match {
-      case "Spades"   => (senderPlayer, Spades)
-      case "Clubs"    => (senderPlayer, Clubs)
-      case "Diamonds" => (senderPlayer, Diamonds)
-      case "Hearts"   => (senderPlayer, Hearts)
+      case CT_SPADES   => (senderPlayer, Spades)
+      case CT_CLUBS    => (senderPlayer, Clubs)
+      case CT_DIAMONDS => (senderPlayer, Diamonds)
+      case CT_HEARTS   => (senderPlayer, Hearts)
     }
 
     inPlayTurn = playerSeats.find(_._2 == senderPlayer) match {

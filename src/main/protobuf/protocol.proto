@@ -14,6 +14,7 @@ message BasRequestResponse{
 		FS_SEND_PLAYER_CARDS = 8;
 		FS_ASK_TRUMP = 9;
 		FC_SEND_TRUMP = 10;
+		FS_SEND_WHOS_TURN = 11;
 	}
 
 	enum UserDirection{
@@ -23,9 +24,32 @@ message BasRequestResponse{
 		UD_SELF = 3;
 	}
 
+	enum CardType {
+		CT_SPADES = 0;
+		CT_HEARTS = 1;
+		CT_CLUBS = 2;
+		CT_DIAMONDS = 3;
+	}
+
+	enum CardNumber {
+		CN_ACE = 0;
+		CN_TWO = 1;
+		CN_THREE = 2;
+		CN_FOUR = 3;
+		CN_FIVE = 4;
+		CN_SIX = 5;
+		CN_SEVEN  = 6;
+		CN_EIGHT = 7;
+		CN_NINE = 8;
+		CN_TEN = 9;
+		CN_JACK = 10;
+		CN_QUEEN = 11;
+		CN_KING = 12;
+	}
+
 	message PlayingCard{
-		string card_type = 1;
-		string card_number = 2;
+		CardType card_type = 1;
+		CardNumber card_number = 2;
 	}
 
 	RequestResponseType request_type = 1;
