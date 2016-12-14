@@ -1,10 +1,11 @@
 package net.orhanbalci.bas
-import net.orhanbalci.bas.protocol._
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.io.Tcp
 import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
 import net.orhanbalci.bas.protocol.BasRequestResponse.CardType._
 import net.orhanbalci.bas.protocol.BasRequestResponse.CardNumber._
-import akka.actor.{Actor, Props, ActorRef, ActorLogging}
-import akka.io.Tcp
+import net.orhanbalci.bas.protocol._
+
 import scala.collection.mutable
 import scala.util.Random
 
