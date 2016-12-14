@@ -15,6 +15,8 @@ message BasRequestResponse{
 		FS_ASK_TRUMP = 9;
 		FC_SEND_TRUMP = 10;
 		FS_SEND_WHOS_TURN = 11;
+		FC_PLAY_CARD = 12;
+		FS_SEND_TRUMP = 13;
 	}
 
 	enum UserDirection{

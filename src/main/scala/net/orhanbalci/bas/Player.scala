@@ -1,7 +1,11 @@
 package net.orhanbalci.bas
 import net.orhanbalci.bas.protocol._
 import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
-import net.orhanbalci.bas.protocol.BasRequestResponse.{RequestResponseType, UserDirection}
+import net.orhanbalci.bas.protocol.BasRequestResponse.{
+  RequestResponseType,
+  UserDirection,
+  PlayingCard
+}
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.io.Tcp
 import akka.util.ByteString
@@ -44,6 +48,17 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
       askTrump
     case SendWhosTurn(relativeDirection) =>
       sendWhosTurn(relativeDirection)
+    case SendTrump(trumpCard) =>
+      sendTrump(trumpCard)
+  }
+
+  def sendTrump(card: Card) = {
+    connection ! Tcp.Write(
+      encodeOutgoingMessage(messageType = FS_SEND_TRUMP,
+                            cardInPlay = BasRequestResponse
+                              .PlayingCard()
+                              .withCardType(convertCardType(card))
+                              .withCardNumber(convertCardNumber(card))))
   }
 
   def sendWhosTurn(relativeDirection: RelativeDirection) = {}
@@ -98,10 +113,13 @@ object Player {
                             leftUserName: String = "",
                             rightUserName: String = "",
                             crossUserName: String = "",
-                            userCards: Seq[BasRequestResponse.PlayingCard] = List(),
+                            userCards: Seq[PlayingCard] = List(),
                             leftPlayCount: Integer = 0,
                             rightPlayCount: Integer = 0,
-                            crossPlayCount: Integer = 0): ByteString = {
+                            crossPlayCount: Integer = 0,
+                            cardInPlay: PlayingCard = PlayingCard(
+                              BasRequestResponse.CardType.Unrecognized(0),
+                              BasRequestResponse.CardNumber.Unrecognized(0))): ByteString = {
     val outgoing = BasRequestResponse()
       .withRequestType(messageType)
       .withTextMessage(textMessage)
@@ -113,33 +131,34 @@ object Player {
       .withLeftPlayCount(leftPlayCount)
       .withRightPlayCount(rightPlayCount)
       .withCrossPlayCount(crossPlayCount)
+      .withCardInPlay(cardInPlay)
     ByteString.fromArray(outgoing.toByteArray)
   }
 
-  def convertCardType(card : Card ) : BasRequestResponse.CardType = {
+  def convertCardType(card: Card): BasRequestResponse.CardType = {
     card.cardType match {
-      case Spades => BasRequestResponse.CardType.CT_SPADES
-      case Clubs => BasRequestResponse.CardType.CT_CLUBS
+      case Spades   => BasRequestResponse.CardType.CT_SPADES
+      case Clubs    => BasRequestResponse.CardType.CT_CLUBS
       case Diamonds => BasRequestResponse.CardType.CT_DIAMONDS
-      case Hearts => BasRequestResponse.CardType.CT_HEARTS
+      case Hearts   => BasRequestResponse.CardType.CT_HEARTS
     }
   }
 
-  def convertCardNumber(card : Card) : BasRequestResponse.CardNumber = {
+  def convertCardNumber(card: Card): BasRequestResponse.CardNumber = {
     card.cardNumber match {
-      case Ace =>  BasRequestResponse.CardNumber.CN_ACE
-      case King => BasRequestResponse.CardNumber.CN_KING
+      case Ace   => BasRequestResponse.CardNumber.CN_ACE
+      case King  => BasRequestResponse.CardNumber.CN_KING
       case Queen => BasRequestResponse.CardNumber.CN_QUEEN
-      case Jack => BasRequestResponse.CardNumber.CN_JACK
-      case Ten => BasRequestResponse.CardNumber.CN_TEN
-      case Nine => BasRequestResponse.CardNumber.CN_NINE
+      case Jack  => BasRequestResponse.CardNumber.CN_JACK
+      case Ten   => BasRequestResponse.CardNumber.CN_TEN
+      case Nine  => BasRequestResponse.CardNumber.CN_NINE
       case Eight => BasRequestResponse.CardNumber.CN_EIGHT
       case Seven => BasRequestResponse.CardNumber.CN_SEVEN
-      case Six => BasRequestResponse.CardNumber.CN_SIX
-      case Five => BasRequestResponse.CardNumber.CN_FIVE
-      case Four => BasRequestResponse.CardNumber.CN_FOUR
+      case Six   => BasRequestResponse.CardNumber.CN_SIX
+      case Five  => BasRequestResponse.CardNumber.CN_FIVE
+      case Four  => BasRequestResponse.CardNumber.CN_FOUR
       case Three => BasRequestResponse.CardNumber.CN_THREE
-      case Two => BasRequestResponse.CardNumber.CN_TWO
+      case Two   => BasRequestResponse.CardNumber.CN_TWO
     }
   }
 
@@ -151,6 +170,7 @@ object Player {
   case class SendPlayerCards(cards: List[Card])
   case class AskPlayCount(playCounts: Map[RelativeDirection, Integer])
   case object AskTrump
+  case class SendTrump(card: Card)
   case class SendWhosTurn(relativeDirection: RelativeDirection)
 
 }

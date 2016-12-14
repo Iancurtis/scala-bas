@@ -9,16 +9,17 @@ import scala.collection.mutable
 import scala.util.Random
 
 class Table extends Actor with ActorLogging {
-  var players                     = mutable.Map[String, ActorRef]()
-  var playerNames                 = mutable.Map[ActorRef, String]()
-  var playerSeats                 = mutable.Map[Seat, ActorRef]()
-  var playerCards                 = mutable.Map[ActorRef, List[Card]]()
-  var playCounts                  = Map[ActorRef, Integer]()
-  var whosTurn: Seat              = South
-  var moveCount                   = 13
-  var gameCount                   = 11
-  var inPlayTurn: Seat            = South
-  var trump: (ActorRef, CardType) = (self, Diamonds)
+  var players                 = mutable.Map[String, ActorRef]()
+  var playerNames             = mutable.Map[ActorRef, String]()
+  var playerSeats             = mutable.Map[Seat, ActorRef]()
+  var playerCards             = mutable.Map[ActorRef, List[Card]]()
+  var playCounts              = Map[ActorRef, Integer]()
+  var whosTurn: Seat          = South
+  var moveCount               = 13
+  var gameCount               = 11
+  var inPlayTurn: Seat        = South
+  var trump: (ActorRef, Card) = (self, AceOfDiamonds)
+  var cardsOnTable            = List[Card]()
 
   override def receive = {
     case Table.Register(remote, connection) =>
@@ -59,10 +60,22 @@ class Table extends Actor with ActorLogging {
         else
           askTrump
       case FC_SEND_TRUMP =>
-        setTrump(
-          senderPlayer,
-          playerRequest.cardInPlay.getOrElse(BasRequestResponse.PlayingCard(CT_SPADES, CN_ACE)).cardType)
+        setTrump(senderPlayer,
+                 playerRequest.cardInPlay
+                   .getOrElse(BasRequestResponse.PlayingCard(CT_SPADES, CN_ACE))
+                   .cardType)
         sendWhosTurn(inPlayTurn)
+        sendTrump(trump._2)
+      case FC_PLAY_CARD =>
+        if (playerSeats(inPlayTurn) == senderPlayer) {
+          sendWhosTurn(getNextInPlayTurn)
+        }
+    }
+  }
+
+  def sendTrump(card: Card) = {
+    players foreach {
+      case (name, actorRef) => actorRef ! Player.SendTrump(card)
     }
   }
 
@@ -75,10 +88,10 @@ class Table extends Actor with ActorLogging {
 
   def setTrump(senderPlayer: ActorRef, cardType: BasRequestResponse.CardType) = {
     trump = cardType match {
-      case CT_SPADES   => (senderPlayer, Spades)
-      case CT_CLUBS    => (senderPlayer, Clubs)
-      case CT_DIAMONDS => (senderPlayer, Diamonds)
-      case CT_HEARTS   => (senderPlayer, Hearts)
+      case CT_SPADES   => (senderPlayer, AceOfSpades)
+      case CT_CLUBS    => (senderPlayer, AceOfClubs)
+      case CT_DIAMONDS => (senderPlayer, AceOfDiamonds)
+      case CT_HEARTS   => (senderPlayer, AceOfHearts)
     }
 
     inPlayTurn = playerSeats.find(_._2 == senderPlayer) match {

@@ -23,7 +23,7 @@ case object Four  extends CardNumber("Four", 4)
 case object Three extends CardNumber("Three", 3)
 case object Two   extends CardNumber("Two", 2)
 
-sealed abstract class Card(val cardType: CardType, val cardNumber: CardNumber)
+class Card(val cardType: CardType, val cardNumber: CardNumber)
 case object AceOfSpades   extends Card(Spades, Ace)
 case object KingOfSpades  extends Card(Spades, King)
 case object QueenOfSpades extends Card(Spades, Queen)
