@@ -66,8 +66,8 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
   }
 
   def sendWhosTurn(relativeDirection: RelativeDirection) = {
-    connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_SEND_WHOS_TURN,
-      userDirection = relativeDirection))
+    connection ! Tcp.Write(
+      encodeOutgoingMessage(messageType = FS_SEND_WHOS_TURN, userDirection = relativeDirection))
   }
 
   def askTrump = {

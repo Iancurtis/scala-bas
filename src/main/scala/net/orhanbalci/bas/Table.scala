@@ -69,9 +69,41 @@ class Table extends Actor with ActorLogging {
         sendTrump(trump._2)
       case FC_PLAY_CARD =>
         if (playerSeats(inPlayTurn) == senderPlayer) {
+          playerCards(senderPlayer) =
+            playerCards(senderPlayer).filterNot(_ == convertCard(playerRequest.cardInPlay.get))
+          cardsOnTable = convertCard(playerRequest.cardInPlay.get) :: cardsOnTable
           sendWhosTurn(getNextInPlayTurn)
         }
     }
+  }
+
+  def convertCard(card: BasRequestResponse.PlayingCard): Card = {
+    var cardType = card.cardType match {
+      case CT_SPADES   => Spades
+      case CT_CLUBS    => Clubs
+      case CT_DIAMONDS => Diamonds
+      case CT_HEARTS   => Hearts
+      case _           => log.error("Undefined card type in Table::convertCard"); Spades
+    }
+
+    var cardNumber = card.cardNumber match {
+      case CN_ACE   => Ace
+      case CN_KING  => King
+      case CN_QUEEN => Queen
+      case CN_JACK  => Jack
+      case CN_TEN   => Ten
+      case CN_NINE  => Nine
+      case CN_EIGHT => Eight
+      case CN_SEVEN => Seven
+      case CN_SIX   => Six
+      case CN_FIVE  => Five
+      case CN_FOUR  => Four
+      case CN_THREE => Three
+      case CN_TWO   => Two
+      case _           => log.error("Undefined card number in Table::convertCard"); Ace
+    }
+
+    new Card(cardType, cardNumber)
   }
 
   def sendTrump(card: Card) = {

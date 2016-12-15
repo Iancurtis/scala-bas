@@ -23,7 +23,12 @@ case object Four  extends CardNumber("Four", 4)
 case object Three extends CardNumber("Three", 3)
 case object Two   extends CardNumber("Two", 2)
 
-class Card(val cardType: CardType, val cardNumber: CardNumber)
+class Card(val cardType: CardType, val cardNumber: CardNumber) {
+  override def equals(other: Any) = other match {
+    case that: Card => this.cardType == that.cardType && this.cardNumber == that.cardNumber
+    case _          => false
+  }
+}
 case object AceOfSpades   extends Card(Spades, Ace)
 case object KingOfSpades  extends Card(Spades, King)
 case object QueenOfSpades extends Card(Spades, Queen)
