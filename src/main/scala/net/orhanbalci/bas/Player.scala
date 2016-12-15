@@ -6,7 +6,7 @@ import net.orhanbalci.bas.protocol.BasRequestResponse.{
   UserDirection,
   PlayingCard
 }
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
 import akka.io.Tcp
 import akka.util.ByteString
 
@@ -17,7 +17,11 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
   import Player._
   var name = ""
 
+  context.watch(connection)
   def receive = {
+    case Terminated(connection) =>
+      context.parent ! Table.UnRegister(id)
+      context stop self
     case Tcp.Received(data) =>
       //log.debug(s"$id says ${data.utf8String}")
       val request = decodeIncommingMessage(data)
@@ -61,7 +65,10 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
                               .withCardNumber(convertCardNumber(card))))
   }
 
-  def sendWhosTurn(relativeDirection: RelativeDirection) = {}
+  def sendWhosTurn(relativeDirection: RelativeDirection) = {
+    connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_SEND_WHOS_TURN,
+      userDirection = relativeDirection))
+  }
 
   def askTrump = {
     connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_ASK_TRUMP))

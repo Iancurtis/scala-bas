@@ -5,7 +5,7 @@ import java.net.InetSocketAddress
 object Main extends App {
 
   lazy val address = {
-    new InetSocketAddress("localhost", 4242)
+    new InetSocketAddress("10.10.0.37", 4242)
   }
   override def main(args: Array[String]) = {
     runServer()
