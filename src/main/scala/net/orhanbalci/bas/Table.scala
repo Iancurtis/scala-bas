@@ -55,18 +55,22 @@ class Table extends Actor with ActorLogging {
           askPlayCount(South)
         }
       case FC_SEND_PLAY_COUNT =>
-        setPlayCount(senderPlayer, playerRequest.playCount)
-        if (playCounts.size < 4)
-          askPlayCount(getNextInPlayTurn)
-        else
-          askTrump
+        if (playerSeats(inPlayTurn) == senderPlayer) {
+          setPlayCount(senderPlayer, playerRequest.playCount)
+          if (playCounts.size < 4)
+            askPlayCount(getNextInPlayTurn)
+          else
+            askTrump
+        }
       case FC_SEND_TRUMP =>
-        setTrump(senderPlayer,
-                 playerRequest.cardInPlay
-                   .getOrElse(BasRequestResponse.PlayingCard(CT_SPADES, CN_ACE))
-                   .cardType)
-        sendWhosTurn(inPlayTurn)
-        sendTrump(trump._2)
+        if (playerSeats(inPlayTurn) == senderPlayer) {
+          setTrump(senderPlayer,
+                   playerRequest.cardInPlay
+                     .getOrElse(BasRequestResponse.PlayingCard(CT_SPADES, CN_ACE))
+                     .cardType)
+          sendWhosTurn(inPlayTurn)
+          sendTrump(trump._2)
+        }
       case FC_PLAY_CARD =>
         if (playerSeats(inPlayTurn) == senderPlayer) {
           playerCards(senderPlayer) =
@@ -100,7 +104,7 @@ class Table extends Actor with ActorLogging {
       case CN_FOUR  => Four
       case CN_THREE => Three
       case CN_TWO   => Two
-      case _           => log.error("Undefined card number in Table::convertCard"); Ace
+      case _        => log.error("Undefined card number in Table::convertCard"); Ace
     }
 
     new Card(cardType, cardNumber)
@@ -115,7 +119,9 @@ class Table extends Actor with ActorLogging {
   def sendWhosTurn(playerInTurnSeat: Seat) = {
     playerSeats foreach {
       case (seat, player) =>
-        player ! Player.SendWhosTurn(seat.getDirectionRelative(playerInTurnSeat))
+        player ! Player.SendWhosTurn(seat.getDirectionRelative(playerInTurnSeat),
+                                     playerCards(playerSeats(seat)),
+                                     cardsOnTable)
     }
   }
 

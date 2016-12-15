@@ -50,8 +50,8 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
       sendAskPlayCount(playCounts)
     case AskTrump =>
       askTrump
-    case SendWhosTurn(relativeDirection) =>
-      sendWhosTurn(relativeDirection)
+    case SendWhosTurn(relativeDirection, userCards, tableCards) =>
+      sendWhosTurn(relativeDirection, userCards, tableCards)
     case SendTrump(trumpCard) =>
       sendTrump(trumpCard)
   }
@@ -65,9 +65,26 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
                               .withCardNumber(convertCardNumber(card))))
   }
 
-  def sendWhosTurn(relativeDirection: RelativeDirection) = {
+  def sendWhosTurn(relativeDirection: RelativeDirection,
+                   userCards: List[Card],
+                   tableCards: List[Card]) = {
+    val userCardsTransformed = userCards.map(
+      c =>
+        BasRequestResponse
+          .PlayingCard()
+          .withCardType(convertCardType(c))
+          .withCardNumber(convertCardNumber(c)))
+    val tableCardsTransformed = tableCards.map(
+      c =>
+        BasRequestResponse
+          .PlayingCard()
+          .withCardType(convertCardType(c))
+          .withCardNumber(convertCardNumber(c)))
     connection ! Tcp.Write(
-      encodeOutgoingMessage(messageType = FS_SEND_WHOS_TURN, userDirection = relativeDirection))
+      encodeOutgoingMessage(messageType = FS_SEND_WHOS_TURN,
+                            userDirection = relativeDirection,
+                            userCards = userCardsTransformed,
+                            tableCards = tableCardsTransformed))
   }
 
   def askTrump = {
@@ -126,7 +143,8 @@ object Player {
                             crossPlayCount: Integer = 0,
                             cardInPlay: PlayingCard = PlayingCard(
                               BasRequestResponse.CardType.Unrecognized(0),
-                              BasRequestResponse.CardNumber.Unrecognized(0))): ByteString = {
+                              BasRequestResponse.CardNumber.Unrecognized(0)),
+                            tableCards: Seq[PlayingCard] = List()): ByteString = {
     val outgoing = BasRequestResponse()
       .withRequestType(messageType)
       .withTextMessage(textMessage)
@@ -139,6 +157,7 @@ object Player {
       .withRightPlayCount(rightPlayCount)
       .withCrossPlayCount(crossPlayCount)
       .withCardInPlay(cardInPlay)
+      .withCardsOnTable(tableCards)
     ByteString.fromArray(outgoing.toByteArray)
   }
 
@@ -178,6 +197,8 @@ object Player {
   case class AskPlayCount(playCounts: Map[RelativeDirection, Integer])
   case object AskTrump
   case class SendTrump(card: Card)
-  case class SendWhosTurn(relativeDirection: RelativeDirection)
+  case class SendWhosTurn(relativeDirection: RelativeDirection,
+                          userCards: List[Card],
+                          tableCards: List[Card])
 
 }
