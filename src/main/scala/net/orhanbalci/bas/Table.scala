@@ -1,10 +1,16 @@
 package net.orhanbalci.bas
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.io.Tcp
-import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
-import net.orhanbalci.bas.protocol.BasRequestResponse.CardType._
-import net.orhanbalci.bas.protocol.BasRequestResponse.CardNumber._
-import net.orhanbalci.bas.protocol._
+import net.orhanbalci.bas.protocol.RequestResponseType._
+import net.orhanbalci.bas.protocol.CardType._
+import net.orhanbalci.bas.protocol.CardNumber._
+import net.orhanbalci.bas.protocol.{
+  CardType => ProCardType,
+  CardNumber => ProCardNumber,
+  BasRequestResponse,
+  RequestResponseType,
+  PlayingCard
+}
 
 import scala.collection.mutable
 import scala.util.Random
@@ -65,9 +71,7 @@ class Table extends Actor with ActorLogging {
       case FC_SEND_TRUMP =>
         if (playerSeats(inPlayTurn) == senderPlayer) {
           setTrump(senderPlayer,
-                   playerRequest.cardInPlay
-                     .getOrElse(BasRequestResponse.PlayingCard(CT_SPADES, CN_ACE))
-                     .cardType)
+                   playerRequest.cardInPlay.getOrElse(PlayingCard(CT_SPADES, CN_ACE)).cardType)
           sendWhosTurn(inPlayTurn)
           sendTrump(trump._2)
         }
@@ -81,8 +85,8 @@ class Table extends Actor with ActorLogging {
     }
   }
 
-  def convertCard(card: BasRequestResponse.PlayingCard): Card = {
-    var cardType = card.cardType match {
+  def convertCard(card: PlayingCard): Card = {
+    val cardType = card.cardType match {
       case CT_SPADES   => Spades
       case CT_CLUBS    => Clubs
       case CT_DIAMONDS => Diamonds
@@ -90,7 +94,7 @@ class Table extends Actor with ActorLogging {
       case _           => log.error("Undefined card type in Table::convertCard"); Spades
     }
 
-    var cardNumber = card.cardNumber match {
+    val cardNumber = card.cardNumber match {
       case CN_ACE   => Ace
       case CN_KING  => King
       case CN_QUEEN => Queen
@@ -112,7 +116,7 @@ class Table extends Actor with ActorLogging {
 
   def sendTrump(card: Card) = {
     players foreach {
-      case (name, actorRef) => actorRef ! Player.SendTrump(card)
+      case (_, actorRef) => actorRef ! Player.SendTrump(card)
     }
   }
 
@@ -125,7 +129,7 @@ class Table extends Actor with ActorLogging {
     }
   }
 
-  def setTrump(senderPlayer: ActorRef, cardType: BasRequestResponse.CardType) = {
+  def setTrump(senderPlayer: ActorRef, cardType: ProCardType) = {
     trump = cardType match {
       case CT_SPADES   => (senderPlayer, AceOfSpades)
       case CT_CLUBS    => (senderPlayer, AceOfClubs)

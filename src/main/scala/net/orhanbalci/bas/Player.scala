@@ -1,11 +1,13 @@
 package net.orhanbalci.bas
-import net.orhanbalci.bas.protocol._
-import net.orhanbalci.bas.protocol.BasRequestResponse.RequestResponseType._
-import net.orhanbalci.bas.protocol.BasRequestResponse.{
+import net.orhanbalci.bas.protocol.{
+  BasRequestResponse,
+  PlayingCard,
+  CardNumber => ProCardNumber,
+  CardType => ProCardType,
   RequestResponseType,
-  UserDirection,
-  PlayingCard
+  UserDirection
 }
+import net.orhanbalci.bas.protocol.RequestResponseType._
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Terminated}
 import akka.io.Tcp
 import akka.util.ByteString
@@ -59,8 +61,7 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
   def sendTrump(card: Card) = {
     connection ! Tcp.Write(
       encodeOutgoingMessage(messageType = FS_SEND_TRUMP,
-                            cardInPlay = BasRequestResponse
-                              .PlayingCard()
+                            cardInPlay = PlayingCard()
                               .withCardType(convertCardType(card))
                               .withCardNumber(convertCardNumber(card))))
   }
@@ -68,18 +69,10 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
   def sendWhosTurn(relativeDirection: RelativeDirection,
                    userCards: List[Card],
                    tableCards: List[Card]) = {
-    val userCardsTransformed = userCards.map(
-      c =>
-        BasRequestResponse
-          .PlayingCard()
-          .withCardType(convertCardType(c))
-          .withCardNumber(convertCardNumber(c)))
-    val tableCardsTransformed = tableCards.map(
-      c =>
-        BasRequestResponse
-          .PlayingCard()
-          .withCardType(convertCardType(c))
-          .withCardNumber(convertCardNumber(c)))
+    val userCardsTransformed = userCards.map(c =>
+      PlayingCard().withCardType(convertCardType(c)).withCardNumber(convertCardNumber(c)))
+    val tableCardsTransformed = tableCards.map(c =>
+      PlayingCard().withCardType(convertCardType(c)).withCardNumber(convertCardNumber(c)))
     connection ! Tcp.Write(
       encodeOutgoingMessage(messageType = FS_SEND_WHOS_TURN,
                             userDirection = relativeDirection,
@@ -100,12 +93,8 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
   }
 
   def sendPlayerCards(cards: List[Card]) = {
-    val cardsTransformed = cards.map(
-      c =>
-        BasRequestResponse
-          .PlayingCard()
-          .withCardType(convertCardType(c))
-          .withCardNumber(convertCardNumber(c)))
+    val cardsTransformed = cards.map(c =>
+      PlayingCard().withCardType(convertCardType(c)).withCardNumber(convertCardNumber(c)))
     connection ! Tcp.Write(
       encodeOutgoingMessage(messageType = FS_SEND_PLAYER_CARDS, userCards = cardsTransformed))
 
@@ -131,20 +120,20 @@ object Player {
     BasRequestResponse.parseFrom(dataArray)
   }
 
-  def encodeOutgoingMessage(messageType: RequestResponseType = Unrecognized(-1),
-                            textMessage: String = "",
-                            userDirection: RelativeDirection = SelfDirection,
-                            leftUserName: String = "",
-                            rightUserName: String = "",
-                            crossUserName: String = "",
-                            userCards: Seq[PlayingCard] = List(),
-                            leftPlayCount: Integer = 0,
-                            rightPlayCount: Integer = 0,
-                            crossPlayCount: Integer = 0,
-                            cardInPlay: PlayingCard = PlayingCard(
-                              BasRequestResponse.CardType.Unrecognized(0),
-                              BasRequestResponse.CardNumber.Unrecognized(0)),
-                            tableCards: Seq[PlayingCard] = List()): ByteString = {
+  def encodeOutgoingMessage(
+      messageType: RequestResponseType = Unrecognized(-1),
+      textMessage: String = "",
+      userDirection: RelativeDirection = SelfDirection,
+      leftUserName: String = "",
+      rightUserName: String = "",
+      crossUserName: String = "",
+      userCards: Seq[PlayingCard] = List(),
+      leftPlayCount: Integer = 0,
+      rightPlayCount: Integer = 0,
+      crossPlayCount: Integer = 0,
+      cardInPlay: PlayingCard =
+        PlayingCard(ProCardType.Unrecognized(0), ProCardNumber.Unrecognized(0)),
+      tableCards: Seq[PlayingCard] = List()): ByteString = {
     val outgoing = BasRequestResponse()
       .withRequestType(messageType)
       .withTextMessage(textMessage)
@@ -161,30 +150,30 @@ object Player {
     ByteString.fromArray(outgoing.toByteArray)
   }
 
-  def convertCardType(card: Card): BasRequestResponse.CardType = {
+  def convertCardType(card: Card): ProCardType = {
     card.cardType match {
-      case Spades   => BasRequestResponse.CardType.CT_SPADES
-      case Clubs    => BasRequestResponse.CardType.CT_CLUBS
-      case Diamonds => BasRequestResponse.CardType.CT_DIAMONDS
-      case Hearts   => BasRequestResponse.CardType.CT_HEARTS
+      case Spades   => ProCardType.CT_SPADES
+      case Clubs    => ProCardType.CT_CLUBS
+      case Diamonds => ProCardType.CT_DIAMONDS
+      case Hearts   => ProCardType.CT_HEARTS
     }
   }
 
-  def convertCardNumber(card: Card): BasRequestResponse.CardNumber = {
+  def convertCardNumber(card: Card): ProCardNumber = {
     card.cardNumber match {
-      case Ace   => BasRequestResponse.CardNumber.CN_ACE
-      case King  => BasRequestResponse.CardNumber.CN_KING
-      case Queen => BasRequestResponse.CardNumber.CN_QUEEN
-      case Jack  => BasRequestResponse.CardNumber.CN_JACK
-      case Ten   => BasRequestResponse.CardNumber.CN_TEN
-      case Nine  => BasRequestResponse.CardNumber.CN_NINE
-      case Eight => BasRequestResponse.CardNumber.CN_EIGHT
-      case Seven => BasRequestResponse.CardNumber.CN_SEVEN
-      case Six   => BasRequestResponse.CardNumber.CN_SIX
-      case Five  => BasRequestResponse.CardNumber.CN_FIVE
-      case Four  => BasRequestResponse.CardNumber.CN_FOUR
-      case Three => BasRequestResponse.CardNumber.CN_THREE
-      case Two   => BasRequestResponse.CardNumber.CN_TWO
+      case Ace   => ProCardNumber.CN_ACE
+      case King  => ProCardNumber.CN_KING
+      case Queen => ProCardNumber.CN_QUEEN
+      case Jack  => ProCardNumber.CN_JACK
+      case Ten   => ProCardNumber.CN_TEN
+      case Nine  => ProCardNumber.CN_NINE
+      case Eight => ProCardNumber.CN_EIGHT
+      case Seven => ProCardNumber.CN_SEVEN
+      case Six   => ProCardNumber.CN_SIX
+      case Five  => ProCardNumber.CN_FIVE
+      case Four  => ProCardNumber.CN_FOUR
+      case Three => ProCardNumber.CN_THREE
+      case Two   => ProCardNumber.CN_TWO
     }
   }
 

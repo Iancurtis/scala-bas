@@ -1,59 +1,59 @@
 syntax = "proto3";
 
 package net.orhanbalci.bas;
+enum RequestResponseType{
+	FC_SEND_TEXT_MESSAGE = 0;
+	FS_SEND_TEXT_MESSAGE = 1;
+	FS_ASK_NAME = 2;
+	FC_SEND_NAME = 3;
+	FS_ASK_PLAY_COUNT = 4;
+	FC_SEND_PLAY_COUNT = 5;
+	FS_SEND_NEW_USER_INFOS = 6;
+	FS_SEND_ALL_USERS_INFOS = 7;
+	FS_SEND_PLAYER_CARDS = 8;
+	FS_ASK_TRUMP = 9;
+	FC_SEND_TRUMP = 10;
+	FS_SEND_WHOS_TURN = 11;
+	FC_PLAY_CARD = 12;
+	FS_SEND_TRUMP = 13;
+}
+
+enum UserDirection{
+	UD_CROSS = 0;
+	UD_LEFT = 1;
+	UD_RIGHT = 2;
+	UD_SELF = 3;
+}
+
+enum CardType {
+	CT_SPADES = 0;
+	CT_HEARTS = 1;
+	CT_CLUBS = 2;
+	CT_DIAMONDS = 3;
+}
+
+enum CardNumber {
+	CN_ACE = 0;
+	CN_TWO = 1;
+	CN_THREE = 2;
+	CN_FOUR = 3;
+	CN_FIVE = 4;
+	CN_SIX = 5;
+	CN_SEVEN  = 6;
+	CN_EIGHT = 7;
+	CN_NINE = 8;
+	CN_TEN = 9;
+	CN_JACK = 10;
+	CN_QUEEN = 11;
+	CN_KING = 12;
+}
+
+message PlayingCard{
+	CardType card_type = 1;
+	CardNumber card_number = 2;
+}
+
 message BasRequestResponse{
-	enum RequestResponseType{
-		FC_SEND_TEXT_MESSAGE = 0;		
-		FS_SEND_TEXT_MESSAGE = 1;
-		FS_ASK_NAME = 2;
-		FC_SEND_NAME = 3;
-		FS_ASK_PLAY_COUNT = 4;
-		FC_SEND_PLAY_COUNT = 5;
-		FS_SEND_NEW_USER_INFOS = 6;
-		FS_SEND_ALL_USERS_INFOS = 7;
-		FS_SEND_PLAYER_CARDS = 8;
-		FS_ASK_TRUMP = 9;
-		FC_SEND_TRUMP = 10;
-		FS_SEND_WHOS_TURN = 11;
-		FC_PLAY_CARD = 12;
-		FS_SEND_TRUMP = 13;
-	}
-
-	enum UserDirection{
-		UD_CROSS = 0;
-		UD_LEFT = 1;
-		UD_RIGHT = 2;
-		UD_SELF = 3;
-	}
-
-	enum CardType {
-		CT_SPADES = 0;
-		CT_HEARTS = 1;
-		CT_CLUBS = 2;
-		CT_DIAMONDS = 3;
-	}
-
-	enum CardNumber {
-		CN_ACE = 0;
-		CN_TWO = 1;
-		CN_THREE = 2;
-		CN_FOUR = 3;
-		CN_FIVE = 4;
-		CN_SIX = 5;
-		CN_SEVEN  = 6;
-		CN_EIGHT = 7;
-		CN_NINE = 8;
-		CN_TEN = 9;
-		CN_JACK = 10;
-		CN_QUEEN = 11;
-		CN_KING = 12;
-	}
-
-	message PlayingCard{
-		CardType card_type = 1;
-		CardNumber card_number = 2;
-	}
-
 	RequestResponseType request_type = 1;
 	string text_message = 2;
 	uint32 error_code = 3;

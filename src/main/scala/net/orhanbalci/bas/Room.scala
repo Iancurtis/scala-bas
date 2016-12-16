@@ -14,13 +14,13 @@ class Room extends Actor with ActorLogging {
 
   }
 
-  def getSuitableTable : ActorRef = {
+  def getSuitableTable: ActorRef = {
     val suitableTables = tablePlayerCounts.filter(_._2 < 4)
     if (!suitableTables.isEmpty)
       suitableTables.head._1
     else {
       val table = context.actorOf(Table.props)
-      tables = table :: tables 
+      tables = table :: tables
       table
     }
   }
