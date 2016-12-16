@@ -3,30 +3,30 @@ import akka.actor.{Actor, Props, ActorRef, ActorLogging}
 import scala.collection.mutable
 
 class Room extends Actor with ActorLogging {
-  val tables            = mutable.Map[String, ActorRef]()
+  var tables            = List[ActorRef]()
   val tablePlayerCounts = mutable.Map[ActorRef, Int]()
 
   override def receive = {
     case Room.Register(remote, connection) =>
-      getSuitableTable(remote) ! Table.Register(remote, connection)
+      getSuitableTable ! Table.Register(remote, connection)
     case Room.UpdatePlayerCount(count) =>
       updatePlayerCount(sender, count)
 
   }
 
-  def getSuitableTable(remote: String): ActorRef = {
+  def getSuitableTable : ActorRef = {
     val suitableTables = tablePlayerCounts.filter(_._2 < 4)
     if (!suitableTables.isEmpty)
       suitableTables.head._1
     else {
       val table = context.actorOf(Table.props)
-      tables += (remote -> table)
+      tables = table :: tables 
       table
     }
   }
 
   def updatePlayerCount(table: ActorRef, count: Int) = {
-    tablePlayerCounts += (table -> count)
+    tablePlayerCounts(table) = count
   }
 
 }
