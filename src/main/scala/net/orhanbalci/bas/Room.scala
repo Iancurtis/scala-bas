@@ -27,8 +27,11 @@ class Room extends Actor with ActorLogging {
 
   def updatePlayerCount(table: ActorRef, count: Int) = {
     tablePlayerCounts(table) = count
+    if (count == 0) {
+      tablePlayerCounts.remove(table)
+      tables = tables.filterNot(_ == table)
+    }
   }
-
 }
 
 object Room {
