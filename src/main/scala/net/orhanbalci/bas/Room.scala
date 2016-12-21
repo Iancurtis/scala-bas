@@ -30,6 +30,7 @@ class Room extends Actor with ActorLogging {
     if (count == 0) {
       tablePlayerCounts.remove(table)
       tables = tables.filterNot(_ == table)
+      context stop table
     }
   }
 }

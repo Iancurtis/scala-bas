@@ -58,7 +58,7 @@ class Table extends Actor with ActorLogging {
         sendAllPlayerInfos
         if (dealCards) {
           sendPlayerCards
-          askPlayCount(South)
+          askPlayCount(inPlayTurn)
         }
       case FC_SEND_PLAY_COUNT =>
         if (playerSeats(inPlayTurn) == senderPlayer) {
