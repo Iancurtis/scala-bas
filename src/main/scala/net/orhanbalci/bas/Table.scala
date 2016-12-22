@@ -67,6 +67,8 @@ class Table extends Actor with ActorLogging {
             askPlayCount(getNextInPlayTurn)
           else
             askTrump
+        } else {
+          log.debug("Not your turn " + inPlayTurn)
         }
       case FC_SEND_TRUMP =>
         if (playerSeats(inPlayTurn) == senderPlayer) {
@@ -83,6 +85,21 @@ class Table extends Actor with ActorLogging {
           sendWhosTurn(getNextInPlayTurn)
         }
     }
+  }
+
+  def validateTrumpType(card: Card): Boolean = {
+    card.cardType == trump._2.cardType
+  }
+
+  def validateSameCardType(card: Card): Boolean = {
+    if (!cardsOnTable.isEmpty) {
+      card.cardType == cardsOnTable(0).cardType
+    } else
+      true
+  }
+
+  def hasCardType(ct: CardType, player: ActorRef): Boolean = {
+    playerCards(player).exists(c => c.cardType == ct)
   }
 
   def convertCard(card: PlayingCard): Card = {
