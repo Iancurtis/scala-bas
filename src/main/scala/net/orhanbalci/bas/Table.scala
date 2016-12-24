@@ -102,6 +102,15 @@ class Table extends Actor with ActorLogging {
     playerCards(player).exists(c => c.cardType == ct)
   }
 
+  def hasBiggerCard(player: ActorRef): Boolean = {
+    if (cardsOnTable.size > 0) {
+      val sameCardTypes   = cardsOnTable.filter(crd => crd.cardType == cardsOnTable(0).cardType)
+      val sortedCardTypes = sameCardTypes.sortWith(_.cardNumber < _.cardNumber)
+      playerCards(player).exists(_.cardNumber > sortedCardTypes(0).cardNumber)
+    } else
+      true
+  }
+
   def convertCard(card: PlayingCard): Card = {
     val cardType = card.cardType match {
       case CT_SPADES   => Spades
