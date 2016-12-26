@@ -26,7 +26,7 @@ class Table extends Actor with ActorLogging {
   var gameCount               = 11
   var inPlayTurn: Seat        = South
   var trump: (ActorRef, Card) = (self, AceOfDiamonds)
-  var cardsOnTable            = List[Card]()
+  var cardsOnTable            = List[(Seat, Card)]()
 
   override def receive = {
     case Table.Register(remote, connection) =>
@@ -82,7 +82,7 @@ class Table extends Actor with ActorLogging {
           if (isOktoPlayCard(convertCard(playerRequest.cardInPlay.get), senderPlayer)) {
             playerCards(senderPlayer) =
               playerCards(senderPlayer).filterNot(_ == convertCard(playerRequest.cardInPlay.get))
-            cardsOnTable = convertCard(playerRequest.cardInPlay.get) :: cardsOnTable
+            cardsOnTable = (getPlayerSeat(senderPlayer), convertCard(playerRequest.cardInPlay.get)) :: cardsOnTable
             sendWhosTurn(getNextInPlayTurn)
           }
         }
@@ -91,11 +91,11 @@ class Table extends Actor with ActorLogging {
 
   def isOktoPlayCard(card: Card, player: ActorRef): Boolean = {
     if (validateSameCardType(card)) { //ilk atilan kart oynaniyor
-      if (hasBiggerCard(cardsOnTable(0).cardType, player)) { // masadaki kartlarin en buyugunden buyuk kagidi var mi
+      if (hasBiggerCard(cardsOnTable(0)._2.cardType, player)) { // masadaki kartlarin en buyugunden buyuk kagidi var mi
         if (isTrumpOnTable) // koz oynanmis mi
           true
         else {
-          if (isCardBiggerThanOthers(cardsOnTable(0).cardType, card))
+          if (isCardBiggerThanOthers(cardsOnTable(0)._2.cardType, card))
             true
           else
             false
@@ -103,7 +103,7 @@ class Table extends Actor with ActorLogging {
       } else
         true
     } else if (isTrumpType(card)) { // koz oynaniyor
-      if (hasCardType(cardsOnTable(0).cardType, player)) // ilk oynanan kartc cinsinden elinde var mi
+      if (hasCardType(cardsOnTable(0)._2.cardType, player)) // ilk oynanan kartc cinsinden elinde var mi
         false
       else if (hasBiggerCard(trump._2.cardType, player)) { // el yukseltebilir mi
         if (isCardBiggerThanOthers(trump._2.cardType, card)) // el yukseltmis mi
@@ -113,7 +113,7 @@ class Table extends Actor with ActorLogging {
       } else
         true
     } else {
-      if (hasCardType(cardsOnTable(0).cardType, player)) // ilk oynanan karttan elinde var mi
+      if (hasCardType(cardsOnTable(0)._2.cardType, player)) // ilk oynanan karttan elinde var mi
         false
       else if (hasCardType(trump._2.cardType, player)) // elinde koz varmi
         false
@@ -128,7 +128,7 @@ class Table extends Actor with ActorLogging {
 
   def validateSameCardType(card: Card): Boolean = {
     if (!cardsOnTable.isEmpty) {
-      card.cardType == cardsOnTable(0).cardType
+      card.cardType == cardsOnTable(0)._2.cardType
     } else
       true
   }
@@ -139,24 +139,24 @@ class Table extends Actor with ActorLogging {
 
   def hasBiggerCard(ct: CardType, player: ActorRef): Boolean = {
     if (cardsOnTable.size > 0) {
-      val sameCardTypes   = cardsOnTable.filter(crd => crd.cardType == ct)
-      val sortedCardTypes = sameCardTypes.sortWith(_.cardNumber < _.cardNumber)
-      playerCards(player).exists(_.cardNumber > sortedCardTypes(0).cardNumber)
+      val sameCardTypes   = cardsOnTable.filter(crd => crd._2.cardType == ct)
+      val sortedCardTypes = sameCardTypes.sortWith(_._2.cardNumber < _._2.cardNumber)
+      playerCards(player).exists(_.cardNumber > sortedCardTypes(0)._2.cardNumber)
     } else
       true
   }
 
   def isCardBiggerThanOthers(ct: CardType, card: Card): Boolean = {
     if (cardsOnTable.size > 0) {
-      val sameCardTypes   = cardsOnTable.filter(crd => crd.cardType == ct)
-      val sortedCardTypes = sameCardTypes.sortWith(_.cardNumber < _.cardNumber)
-      card.cardNumber > sortedCardTypes(0).cardNumber
+      val sameCardTypes   = cardsOnTable.filter(crd => crd._2.cardType == ct)
+      val sortedCardTypes = sameCardTypes.sortWith(_._2.cardNumber < _._2.cardNumber)
+      card.cardNumber > sortedCardTypes(0)._2.cardNumber
     } else
       true
   }
 
   def isTrumpOnTable(): Boolean = {
-    cardsOnTable.exists(card => card.cardType == trump._2.cardType)
+    cardsOnTable.exists(card => card._2.cardType == trump._2.cardType)
   }
 
   def convertCard(card: PlayingCard): Card = {
@@ -314,6 +314,11 @@ class Table extends Actor with ActorLogging {
       false
     }
   }
+
+  def getPlayerSeat(player: ActorRef): Seat = {
+    playerSeats.find(_._2 == player).get._1
+  }
+
 }
 
 object Table {

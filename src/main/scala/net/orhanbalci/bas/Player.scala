@@ -68,11 +68,11 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
 
   def sendWhosTurn(relativeDirection: RelativeDirection,
                    userCards: List[Card],
-                   tableCards: List[Card]) = {
+                   tableCards: List[(Seat, Card)]) = {
     val userCardsTransformed = userCards.map(c =>
       PlayingCard().withCardType(convertCardType(c)).withCardNumber(convertCardNumber(c)))
     val tableCardsTransformed = tableCards.map(c =>
-      PlayingCard().withCardType(convertCardType(c)).withCardNumber(convertCardNumber(c)))
+      PlayingCard().withCardType(convertCardType(c._2)).withCardNumber(convertCardNumber(c._2)))
     connection ! Tcp.Write(
       encodeOutgoingMessage(messageType = FS_SEND_WHOS_TURN,
                             userDirection = relativeDirection,
@@ -188,6 +188,6 @@ object Player {
   case class SendTrump(card: Card)
   case class SendWhosTurn(relativeDirection: RelativeDirection,
                           userCards: List[Card],
-                          tableCards: List[Card])
+                          tableCards: List[(Seat, Card)])
 
 }
