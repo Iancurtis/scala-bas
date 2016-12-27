@@ -21,6 +21,7 @@ class Table extends Actor with ActorLogging {
   var playerSeats             = mutable.Map[Seat, ActorRef]()
   var playerCards             = mutable.Map[ActorRef, List[Card]]()
   var playCounts              = Map[ActorRef, Integer]()
+  var gamesEarned             = Map[ActorRef, Integer]()
   var whosTurn: Seat          = South
   var moveCount               = 13
   var gameCount               = 11
@@ -83,9 +84,34 @@ class Table extends Actor with ActorLogging {
             playerCards(senderPlayer) =
               playerCards(senderPlayer).filterNot(_ == convertCard(playerRequest.cardInPlay.get))
             cardsOnTable = (getPlayerSeat(senderPlayer), convertCard(playerRequest.cardInPlay.get)) :: cardsOnTable
-            sendWhosTurn(getNextInPlayTurn)
+            if (cardsOnTable.size == 4) {
+              val winnerPlayer = whoWin()
+              incrementEarnedCount(winnerPlayer)
+              inPlayTurn = playerSeats.find(_._2 == winnerPlayer).get._1
+              sendWhosTurn(inPlayTurn)
+              cardsOnTable = List[(Seat, Card)]()
+            } else
+              sendWhosTurn(getNextInPlayTurn)
           }
         }
+    }
+  }
+
+  def incrementEarnedCount(player: ActorRef) = {
+    gamesEarned = gamesEarned + (player -> (gamesEarned(player) + 1))
+  }
+
+  def whoWin(): ActorRef = {
+    val trumps = cardsOnTable
+      .filter(crd => crd._2.cardType == trump._2.cardType)
+      .sortWith(_._2.cardNumber < _._2.cardNumber)
+    if (!trumps.isEmpty)
+      playerSeats(trumps(0)._1)
+    else {
+      val sortedCards = cardsOnTable
+        .filter(crd => crd._2.cardType == cardsOnTable(0)._2.cardType)
+        .sortWith(_._2.cardNumber < _._2.cardNumber)
+      playerSeats(sortedCards(0)._1)
     }
   }
 
