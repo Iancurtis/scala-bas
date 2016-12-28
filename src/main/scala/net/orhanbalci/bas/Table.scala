@@ -20,8 +20,8 @@ class Table extends Actor with ActorLogging {
   var playerNames             = mutable.Map[ActorRef, String]()
   var playerSeats             = mutable.Map[Seat, ActorRef]()
   var playerCards             = mutable.Map[ActorRef, List[Card]]()
-  var playCounts              = Map[ActorRef, Integer]()
-  var gamesEarned             = Map[ActorRef, Integer]()
+  var playCounts              = Map[ActorRef, Int]()
+  var gamesEarned             = Map[ActorRef, Int]()
   var whosTurn: Seat          = South
   var moveCount               = 13
   var gameCount               = 11
@@ -106,7 +106,7 @@ class Table extends Actor with ActorLogging {
   }
 
   def incrementEarnedCount(player: ActorRef) = {
-    gamesEarned = gamesEarned + (player -> (gamesEarned(player) + 1))
+    gamesEarned = gamesEarned + (player -> (1 + gamesEarned.getOrElse(player, 0)))
   }
 
   def whoWin(): ActorRef = {
@@ -257,12 +257,12 @@ class Table extends Actor with ActorLogging {
     playCounts.maxBy(_._2)._1 ! Player.AskTrump
   }
 
-  def setPlayCount(player: ActorRef, playCount: Integer) = {
+  def setPlayCount(player: ActorRef, playCount: Int) = {
     playCounts = playCounts + (player -> playCount)
   }
 
   def askPlayCount(seat: Seat) = {
-    val playCountMap: Map[RelativeDirection, Integer] = playCounts.flatMap {
+    val playCountMap: Map[RelativeDirection, Int] = playCounts.flatMap {
       case (playerActor, playCount) =>
         playerSeats.find(playerSeat => playerSeat._2 == playerActor) match {
           case Some(innerSeat) => Some(seat.getDirectionRelative(innerSeat._1) -> playCount)

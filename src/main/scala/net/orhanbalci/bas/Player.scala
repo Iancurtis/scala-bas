@@ -84,7 +84,7 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
     connection ! Tcp.Write(encodeOutgoingMessage(messageType = FS_ASK_TRUMP))
   }
 
-  def sendAskPlayCount(playCounts: Map[RelativeDirection, Integer]) = {
+  def sendAskPlayCount(playCounts: Map[RelativeDirection, Int]) = {
     connection ! Tcp.Write(
       encodeOutgoingMessage(
         messageType = FS_ASK_PLAY_COUNT,
@@ -132,9 +132,9 @@ object Player {
       rightUserName: String = "",
       crossUserName: String = "",
       userCards: Seq[PlayingCard] = List(),
-      leftPlayCount: Integer = 0,
-      rightPlayCount: Integer = 0,
-      crossPlayCount: Integer = 0,
+      leftPlayCount: Int = 0,
+      rightPlayCount: Int = 0,
+      crossPlayCount: Int = 0,
       cardInPlay: PlayingCard =
         PlayingCard(ProCardType.Unrecognized(0), ProCardNumber.Unrecognized(0)),
       tableCards: Seq[PlayingCard] = List()): ByteString = {
@@ -187,7 +187,7 @@ object Player {
   case class SendPlayerInfo(name: String, relativeDirection: RelativeDirection)
   case class SendAllPlayerInfos(nameMap: mutable.Map[RelativeDirection, String])
   case class SendPlayerCards(cards: List[Card])
-  case class AskPlayCount(playCounts: Map[RelativeDirection, Integer])
+  case class AskPlayCount(playCounts: Map[RelativeDirection, Int])
   case object AskTrump
   case class SendTrump(card: Card)
   case class SendWhosTurn(relativeDirection: RelativeDirection,

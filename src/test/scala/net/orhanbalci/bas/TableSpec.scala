@@ -6,9 +6,18 @@ import org.scalatest.{MustMatchers, WordSpecLike, BeforeAndAfterEach}
 import net.orhanbalci.bas.Table
 import net.orhanbalci.bas.Room
 import akka.io.Tcp
+import com.typesafe.config.ConfigFactory
 
 class TableSpec
-    extends TestKit(ActorSystem("table-test-system"))
+    extends TestKit(
+      ActorSystem(
+        "table-test-system",
+        ConfigFactory.parseString("""
+    akka.loggers = ["akka.testkit.TestEventListener"]
+    akka.stdout-loglevel = "OFF"
+    akka.loglevel = "OFF"
+    """)
+      ))
     with WordSpecLike
     with MustMatchers
     with ImplicitSender
@@ -34,6 +43,12 @@ class TableSpec
       firstTable.underlyingActor.players.size must equal(1)
     }
 
+    "unregister player " in {
+      firstTable ! Table.Register("first player", connection)
+      firstTable ! Table.UnRegister("first player")
+      firstTable.underlyingActor.players.size must equal(0)
+    }
+
     "register player with name " in {
       val playerName = "second player"
       firstTable ! Table.Register(playerName, connection)
@@ -51,13 +66,11 @@ class TableSpec
       tcpMessageReceiver.expectMsgPF() {
         case Tcp.Register(_, false, true) => ()
       }
-
     }
 
     "seat players" in {
       firstTable.underlyingActor.seatPlayer(TestProbe().ref)
       firstTable.underlyingActor.playerSeats.size must equal(1)
-
     }
 
     "deal cards when 4 players seated" in {
@@ -118,5 +131,22 @@ class TableSpec
       firstTable.underlyingActor.inPlayTurn = South
       firstTable.underlyingActor.getNextInPlayTurn must equal(East)
     }
+
+    "set players name" in {
+      val player = TestProbe();
+      firstTable.underlyingActor.setPlayerName(player.ref, "orhan")
+      firstTable.underlyingActor.playerNames.size must equal(1)
+      firstTable.underlyingActor.playerNames(player.ref) must equal("orhan")
+    }
+
+    "increment players earned games" in {
+      val player = TestProbe();
+      firstTable.underlyingActor.incrementEarnedCount(player.ref)
+      firstTable.underlyingActor.gamesEarned.size must equal(1)
+      firstTable.underlyingActor.gamesEarned(player.ref) must equal(1)
+      firstTable.underlyingActor.incrementEarnedCount(player.ref)
+      firstTable.underlyingActor.gamesEarned(player.ref) must equal(2)
+    }
+
   }
 }
