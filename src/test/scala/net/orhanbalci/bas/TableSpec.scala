@@ -113,5 +113,10 @@ class TableSpec
         .intersect(firstTable.underlyingActor.playerCards(fourthPlayer.ref))
         .isEmpty must equal(true)
     }
+
+    "get next player in turn" in {
+      firstTable.underlyingActor.inPlayTurn = South
+      firstTable.underlyingActor.getNextInPlayTurn must equal(East)
+    }
   }
 }
