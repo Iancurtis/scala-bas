@@ -1,5 +1,5 @@
 package net.orhanbalci.bas
-import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, Props, ActorRefFactory}
 import akka.io.Tcp
 import net.orhanbalci.bas.protocol.RequestResponseType._
 import net.orhanbalci.bas.protocol.CardType._
@@ -15,7 +15,9 @@ import net.orhanbalci.bas.protocol.{
 import scala.collection.mutable
 import scala.util.Random
 
-class Table extends Actor with ActorLogging {
+class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
+    extends Actor
+    with ActorLogging {
   var players                 = mutable.Map[String, ActorRef]()
   var playerNames             = mutable.Map[ActorRef, String]()
   var playerSeats             = mutable.Map[Seat, ActorRef]()
@@ -31,7 +33,7 @@ class Table extends Actor with ActorLogging {
 
   override def receive = {
     case Table.Register(remote, connection) =>
-      val playerActor = context.actorOf(Player.props(remote, connection))
+      val playerActor = playerMaker(context, remote, connection) //context.actorOf(Player.props(remote, connection))
       players += (remote -> playerActor)
       connection ! Tcp.Register(playerActor)
       context.parent ! Room.UpdatePlayerCount(players.size)
@@ -360,7 +362,8 @@ class Table extends Actor with ActorLogging {
 
 object Table {
   def props(): Props = {
-    Props(new Table())
+    Props(new Table((ctx: ActorRefFactory, playerName: String, connectionActor: ActorRef) =>
+      ctx.actorOf(Player.props(playerName, connectionActor))))
   }
 
   case class Register(remote: String, connection: ActorRef)

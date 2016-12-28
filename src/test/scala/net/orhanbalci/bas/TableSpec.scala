@@ -1,12 +1,19 @@
 package net.orhanbalci.bas
 
-import akka.actor.{ActorSystem, Props, ActorRef, Actor}
+import akka.actor.{ActorSystem, Props, ActorRef, Actor, ActorRefFactory}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import org.scalatest.{MustMatchers, WordSpecLike, BeforeAndAfterEach}
-import net.orhanbalci.bas.Table
-import net.orhanbalci.bas.Room
 import akka.io.Tcp
 import com.typesafe.config.ConfigFactory
+import net.orhanbalci.bas.protocol.{
+  CardType => ProCardType,
+  CardNumber => ProCardNumber,
+  BasRequestResponse,
+  RequestResponseType,
+  PlayingCard
+}
+
+import scala.concurrent.duration._
 
 class TableSpec
     extends TestKit(
@@ -23,17 +30,22 @@ class TableSpec
     with ImplicitSender
     with BeforeAndAfterEach {
 
+  var testPlayer = TestProbe()
+  val playerFactory = (_: ActorRefFactory, _: String, _: ActorRef) => {
+    testPlayer.ref
+  }
   var testParent         = TestProbe()
-  var firstTable         = TestActorRef[Table]
-  var secondTable        = testParent.childActorOf(Props[Table])
-  var connection         = TestActorRef[Table]
+  var firstTable         = TestActorRef(new Table(playerFactory))
+  var secondTable        = testParent.childActorOf(Props(classOf[Table], playerFactory))
+  var connection         = TestActorRef(new Table(playerFactory))
   var tcpMessageReceiver = TestProbe()
 
   override def beforeEach() = {
+    testPlayer = TestProbe()
     testParent = TestProbe()
-    firstTable = TestActorRef[Table]
-    secondTable = testParent.childActorOf(Props[Table])
-    connection = TestActorRef[Table]
+    firstTable = TestActorRef(new Table(playerFactory))
+    secondTable = testParent.childActorOf(Props(classOf[Table], playerFactory))
+    connection = TestActorRef(new Table(playerFactory))
     tcpMessageReceiver = TestProbe()
   }
 
@@ -146,6 +158,20 @@ class TableSpec
       firstTable.underlyingActor.gamesEarned(player.ref) must equal(1)
       firstTable.underlyingActor.incrementEarnedCount(player.ref)
       firstTable.underlyingActor.gamesEarned(player.ref) must equal(2)
+    }
+
+    "decide whether a card is of type trump" in {
+      firstTable.underlyingActor.trump = (TestProbe().ref, AceOfDiamonds)
+      firstTable.underlyingActor.isTrumpType(TwoOfDiamonds) must equal(true)
+      firstTable.underlyingActor.isTrumpType(TwoOfClubs) must equal(false)
+    }
+
+    "send text messages to players" in {
+      firstTable ! Table.Register("first player", connection)
+      firstTable ! Table.PlayerMessage(
+        BasRequestResponse(requestType = RequestResponseType.FC_SEND_TEXT_MESSAGE,
+                           textMessage = "Hello Test"))
+      testPlayer.expectMsgAllOf(100 millis, Player.SendMessage("Hello Test"), Player.AskName)
     }
 
   }
