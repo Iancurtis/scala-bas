@@ -174,5 +174,15 @@ class TableSpec
       testPlayer.expectMsgAllOf(100 millis, Player.SendMessage("Hello Test"), Player.AskName)
     }
 
+    "respond to send name message" in {
+      firstTable ! Table.Register("first player", connection)
+      testPlayer.send(
+        firstTable,
+        Table.PlayerMessage(
+          BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME, name = "orhan")))
+      firstTable.underlyingActor.playerNames.size must equal(1)
+      firstTable.underlyingActor.playerSeats.size must equal(1)
+      firstTable.underlyingActor.playerNames(testPlayer.ref) must equal("orhan")
+    }
   }
 }
