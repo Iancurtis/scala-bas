@@ -86,10 +86,12 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
 
   def sendAskPlayCount(playCounts: Map[RelativeDirection, Integer]) = {
     connection ! Tcp.Write(
-      encodeOutgoingMessage(messageType = FS_ASK_PLAY_COUNT,
-                            leftPlayCount = playCounts.getOrElse(LeftDirection, 0),
-                            rightPlayCount = playCounts.getOrElse(RightDirection, 0),
-                            crossPlayCount = playCounts.getOrElse(CrossDirection, 0)))
+      encodeOutgoingMessage(
+        messageType = FS_ASK_PLAY_COUNT,
+        leftPlayCount = playCounts.getOrElse(LeftDirection, 0),
+        rightPlayCount = playCounts.getOrElse(RightDirection, 0),
+        crossPlayCount = playCounts.getOrElse(CrossDirection, 0)
+      ))
   }
 
   def sendPlayerCards(cards: List[Card]) = {
@@ -103,10 +105,12 @@ class Player(id: String, connection: ActorRef) extends Actor with ActorLogging {
   def sendAllPlayerInfos(directionNameMap: mutable.Map[RelativeDirection, String]) = {
     log.debug(s"send all player infos for $name")
     connection ! Tcp.Write(
-      encodeOutgoingMessage(messageType = FS_SEND_ALL_USERS_INFOS,
-                            leftUserName = directionNameMap.getOrElse(LeftDirection, ""),
-                            rightUserName = directionNameMap.getOrElse(RightDirection, ""),
-                            crossUserName = directionNameMap.getOrElse(CrossDirection, "")))
+      encodeOutgoingMessage(
+        messageType = FS_SEND_ALL_USERS_INFOS,
+        leftUserName = directionNameMap.getOrElse(LeftDirection, ""),
+        rightUserName = directionNameMap.getOrElse(RightDirection, ""),
+        crossUserName = directionNameMap.getOrElse(CrossDirection, "")
+      ))
   }
 }
 

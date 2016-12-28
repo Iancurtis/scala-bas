@@ -86,14 +86,22 @@ class Table extends Actor with ActorLogging {
             cardsOnTable = (getPlayerSeat(senderPlayer), convertCard(playerRequest.cardInPlay.get)) :: cardsOnTable
             if (cardsOnTable.size == 4) {
               val winnerPlayer = whoWin()
+              log.debug(s"${playerNames(winnerPlayer)} wins round")
               incrementEarnedCount(winnerPlayer)
               inPlayTurn = playerSeats.find(_._2 == winnerPlayer).get._1
-              sendWhosTurn(inPlayTurn)
               cardsOnTable = List[(Seat, Card)]()
+              printGamesEarned
+              sendWhosTurn(inPlayTurn)
             } else
               sendWhosTurn(getNextInPlayTurn)
           }
         }
+    }
+  }
+
+  def printGamesEarned() = {
+    gamesEarned foreach {
+      case (player, gamesEarned) => log.debug(s"${playerNames(player)} $gamesEarned")
     }
   }
 
@@ -116,7 +124,9 @@ class Table extends Actor with ActorLogging {
   }
 
   def isOktoPlayCard(card: Card, player: ActorRef): Boolean = {
-    if (validateSameCardType(card)) { //ilk atilan kart oynaniyor
+    if (cardsOnTable.isEmpty)
+      true
+    else if (validateSameCardType(card)) { //ilk atilan kart oynaniyor
       if (hasBiggerCard(cardsOnTable(0)._2.cardType, player)) { // masadaki kartlarin en buyugunden buyuk kagidi var mi
         if (isTrumpOnTable) // koz oynanmis mi
           true
@@ -329,7 +339,8 @@ class Table extends Actor with ActorLogging {
     if (playerSeats.size == 4) {
       var deck = Deck.values.toList
       deck = Random.shuffle(deck)
-      val cardGroups = deck.sliding(13).toList
+      val cardGroups = deck.grouped(13).toList
+      playerCards.clear
       playerCards += (playerSeats(North) -> cardGroups(0))
       playerCards += (playerSeats(South) -> cardGroups(1))
       playerCards += (playerSeats(East)  -> cardGroups(2))

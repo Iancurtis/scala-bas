@@ -12,5 +12,3 @@ libraryDependencies ++= Seq(
 PB.targets in Compile := Seq(
   scalapb.gen() -> (sourceManaged in Compile).value
 )
-
-scalafmtConfig in ThisBuild := Some(file(".scalafmt.conf"))
