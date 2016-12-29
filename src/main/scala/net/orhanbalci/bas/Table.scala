@@ -24,6 +24,7 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
   var playerCards             = mutable.Map[ActorRef, List[Card]]()
   var playCounts              = Map[ActorRef, Int]()
   var gamesEarned             = Map[ActorRef, Int]()
+  var pointsEarned            = List[((Seat,Int),(Seat,Int),(Seat,Int),(Seat,Int))]()
   var whosTurn: Seat          = South
   var moveCount               = 13
   var gameCount               = 11
