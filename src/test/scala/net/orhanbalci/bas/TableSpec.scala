@@ -184,5 +184,74 @@ class TableSpec
       firstTable.underlyingActor.playerSeats.size must equal(1)
       firstTable.underlyingActor.playerNames(testPlayer.ref) must equal("orhan")
     }
+
+    "be able to record play counts" in {
+      val firstPlayer  = TestProbe()
+      val secondPlayer = TestProbe()
+      val thirdPlayer  = TestProbe()
+      val fourthPlayer = TestProbe()
+      firstTable ! Table.Register("first player", connection)
+      firstTable ! Table.Register("second player", connection)
+      firstTable ! Table.Register("third player", connection)
+      firstTable ! Table.Register("fourth player", connection)
+      firstPlayer.send(firstTable,
+                       Table.PlayerMessage(
+                         BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                            name = "first player")))
+      secondPlayer.send(firstTable,
+                        Table.PlayerMessage(
+                          BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                             name = "second player")))
+      thirdPlayer.send(firstTable,
+                       Table.PlayerMessage(
+                         BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                            name = "third player")))
+      fourthPlayer.send(firstTable,
+                        Table.PlayerMessage(
+                          BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                             name = "fourth player")))
+
+      val playerInTurn: TestProbe =
+        if (firstPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          firstPlayer
+        else if (secondPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          secondPlayer
+        else if (thirdPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          thirdPlayer
+        else if (fourthPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          fourthPlayer
+        else
+          firstPlayer
+
+      playerInTurn.send(
+        firstTable,
+        Table.PlayerMessage(
+          BasRequestResponse(requestType = RequestResponseType.FC_SEND_PLAY_COUNT, playCount = 5)))
+
+      firstTable.underlyingActor.playCounts.size must equal(1)
+      firstTable.underlyingActor.playCounts(playerInTurn.ref) must equal(5)
+
+      val nextPlayerInTurn: TestProbe =
+        if (firstPlayer.ref == firstTable.underlyingActor.playerSeats(East))
+          firstPlayer
+        else if (secondPlayer.ref == firstTable.underlyingActor.playerSeats(East))
+          secondPlayer
+        else if (thirdPlayer.ref == firstTable.underlyingActor.playerSeats(East))
+          thirdPlayer
+        else if (fourthPlayer.ref == firstTable.underlyingActor.playerSeats(East))
+          fourthPlayer
+        else
+          firstPlayer
+
+      val s = nextPlayerInTurn.fishForMessage(1 seconds) {
+        case Player.SetName(_)            => false
+        case Player.SendAllPlayerInfos(_) => false
+        case Player.AskPlayCount(_)       => true
+        case Player.SendPlayerCards(_)    => false
+      }
+
+      s.getClass must equal(classOf[Player.AskPlayCount])
+
+    }
   }
 }
