@@ -24,7 +24,7 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
   var playerCards             = mutable.Map[ActorRef, List[Card]]()
   var playCounts              = Map[ActorRef, Int]()
   var gamesEarned             = Map[ActorRef, Int]()
-  var pointsEarned            = List[((Seat,Int),(Seat,Int),(Seat,Int),(Seat,Int))]()
+  var pointsEarned            = List[((Seat, Int), (Seat, Int), (Seat, Int), (Seat, Int))]()
   var whosTurn: Seat          = South
   var moveCount               = 13
   var gameCount               = 11
@@ -129,6 +129,8 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
   def isOktoPlayCard(card: Card, player: ActorRef): Boolean = {
     if (cardsOnTable.isEmpty)
       true
+    else if (!hasCard(card, player))
+      false
     else if (validateSameCardType(card)) { //ilk atilan kart oynaniyor
       if (hasBiggerCard(cardsOnTable(0)._2.cardType, player)) { // masadaki kartlarin en buyugunden buyuk kagidi var mi
         if (isTrumpOnTable) // koz oynanmis mi
@@ -159,6 +161,10 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
       else
         true
     }
+  }
+
+  def hasCard(card: Card, player: ActorRef): Boolean = {
+    playerCards(player).exists(c => c == card)
   }
 
   def isTrumpType(card: Card): Boolean = {

@@ -253,5 +253,57 @@ class TableSpec
       s.getClass must equal(classOf[Player.AskPlayCount])
 
     }
+
+    "be able to register trump card " in {
+      val firstPlayer  = TestProbe()
+      val secondPlayer = TestProbe()
+      val thirdPlayer  = TestProbe()
+      val fourthPlayer = TestProbe()
+      firstTable ! Table.Register("first player", connection)
+      firstTable ! Table.Register("second player", connection)
+      firstTable ! Table.Register("third player", connection)
+      firstTable ! Table.Register("fourth player", connection)
+      firstPlayer.send(firstTable,
+                       Table.PlayerMessage(
+                         BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                            name = "first player")))
+      secondPlayer.send(firstTable,
+                        Table.PlayerMessage(
+                          BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                             name = "second player")))
+      thirdPlayer.send(firstTable,
+                       Table.PlayerMessage(
+                         BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                            name = "third player")))
+      fourthPlayer.send(firstTable,
+                        Table.PlayerMessage(
+                          BasRequestResponse(requestType = RequestResponseType.FC_SEND_NAME,
+                                             name = "fourth player")))
+
+      val playerInTurn: TestProbe =
+        if (firstPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          firstPlayer
+        else if (secondPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          secondPlayer
+        else if (thirdPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          thirdPlayer
+        else if (fourthPlayer.ref == firstTable.underlyingActor.playerSeats(South))
+          fourthPlayer
+        else
+          firstPlayer
+
+      playerInTurn.send(
+        firstTable,
+        Table.PlayerMessage(
+          BasRequestResponse(requestType = RequestResponseType.FC_SEND_TRUMP,
+                             cardInPlay = Some(
+                               PlayingCard()
+                                 .withCardType(ProCardType.CT_SPADES)
+                                 .withCardNumber(ProCardNumber.CN_ACE))))
+      )
+      firstTable.underlyingActor.trump._1 must equal(playerInTurn.ref)
+      firstTable.underlyingActor.trump._2 must equal(AceOfSpades)
+
+    }
   }
 }
