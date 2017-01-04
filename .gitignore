@@ -18,3 +18,6 @@ project/plugins/project/
 
 # jidea specific
 .idea
+
+# sublime specific
+*.sublime-workspace

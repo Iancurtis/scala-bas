@@ -102,6 +102,26 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
     }
   }
 
+  def savePoints() = {
+    pointsEarned = ((South, calculatePoints(playerSeats(South))),
+                    (East, calculatePoints(playerSeats(East))),
+                    (West, calculatePoints(playerSeats(West))),
+                    (North, calculatePoints(playerSeats(North)))) :: pointsEarned
+  }
+
+  def calculatePoints(player: ActorRef): Int = {
+    val isTrumpHolder = player == trump._1
+    if (!isTrumpHolder && gamesEarned(player) == 0)
+      -playCounts(trump._1) * 10
+    else if (!isTrumpHolder && gamesEarned(player) != 0)
+      gamesEarned(player) * 10
+    else if (isTrumpHolder && gamesEarned(player) < playCounts(player))
+      -playCounts(trump._1) * 10
+    else {
+      playCounts(trump._1) * 10 + (gamesEarned(player) - playCounts(player))
+    }
+  }
+
   def printGamesEarned() = {
     gamesEarned foreach {
       case (player, gamesEarned) => log.debug(s"${playerNames(player)} $gamesEarned")
