@@ -95,6 +95,16 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
               cardsOnTable = List[(Seat, Card)]()
               printGamesEarned
               sendWhosTurn(inPlayTurn)
+              moveCount -= 1
+              if (moveCount == 0) { //finish round
+                savePoints
+                inPlayTurn = getNextRoundBeginer
+                if (dealCards) {
+                  sendPlayerCards
+                  askPlayCount(inPlayTurn)
+                }
+                moveCount = 13
+              }
             } else
               sendWhosTurn(getNextInPlayTurn)
           }
@@ -107,6 +117,8 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
                     (East, calculatePoints(playerSeats(East))),
                     (West, calculatePoints(playerSeats(West))),
                     (North, calculatePoints(playerSeats(North)))) :: pointsEarned
+    playCounts = Map[ActorRef, Int]()
+    gamesEarned = Map[ActorRef, Int]()
   }
 
   def calculatePoints(player: ActorRef): Int = {
@@ -322,6 +334,11 @@ class Table(playerMaker: (ActorRefFactory, String, ActorRef) => ActorRef)
   def getNextInPlayTurn: Seat = {
     inPlayTurn = inPlayTurn.getRight
     inPlayTurn
+  }
+
+  def getNextRoundBeginer: Seat = {
+    whosTurn = whosTurn.getRight
+    whosTurn
   }
 
   def sendPlayerCards = {
